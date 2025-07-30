@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,30 +26,45 @@
         .picpay-green-light { color: #21C25E; }
         .bg-picpay-green-light { background-color: #21C25E; }
         
-        /* Estilo para abas e botões com animação */
+        /* Animações e Transições */
         .interactive-item {
-            transition: all 0.2s ease-in-out;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         .interactive-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
         .tab-item.active {
             background-color: #1D824A;
             color: white;
             font-weight: 700;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(29, 130, 74, 0.25);
+            transform: scale(1.02);
         }
         .ranking-btn.active {
             background-color: #21C25E;
             color: white;
+            box-shadow: 0 4px 12px rgba(33, 194, 94, 0.2);
+        }
+
+        /* Animação de Fade-in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        .stagger-fade-in > * {
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out forwards;
         }
 
         /* Estilo para o calendário heatmap */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 4px; /* Reduzido para melhor visualização em telas menores */
+            gap: 4px;
         }
         .calendar-day {
             aspect-ratio: 1 / 1;
@@ -57,42 +72,49 @@
             justify-content: center;
             align-items: center;
             border-radius: 8px;
-            font-size: 0.75rem; /* Ajustado para caber melhor */
+            font-size: 0.75rem;
             transition: all 0.2s ease-in-out;
         }
-        .calendar-day.empty {
-            background-color: transparent;
-        }
+        .calendar-day.empty { background-color: transparent; }
         .calendar-day-header {
             font-weight: 600;
             font-size: 0.7rem;
             text-align: center;
             color: #6B7280;
         }
-
-        /* Melhorias de Responsividade */
         .summary-card-content {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             flex-grow: 1;
         }
-        .summary-card-icon {
-            flex-shrink: 0;
-        }
+        .summary-card-icon { flex-shrink: 0; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <header class="bg-white/90 backdrop-blur-lg shadow-sm sticky top-0 z-50 w-full">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+            <div class="text-xl font-extrabold picpay-green-dark">Dashboard de Praças</div>
+            <nav class="hidden md:flex items-center space-x-4">
+                <a href="#header-summary" class="text-gray-600 hover:text-picpay-green-dark font-semibold transition-colors text-sm px-3 py-2 rounded-md">Resumo Geral</a>
+                <a href="#penetration-section" class="text-gray-600 hover:text-picpay-green-dark font-semibold transition-colors text-sm px-3 py-2 rounded-md">Penetração</a>
+                <a href="#ranking-comparison" class="text-gray-600 hover:text-picpay-green-dark font-semibold transition-colors text-sm px-3 py-2 rounded-md">Ranking</a>
+                <a href="#store-details" class="text-gray-600 hover:text-picpay-green-dark font-semibold transition-colors text-sm px-3 py-2 rounded-md">Análise Individual</a>
+            </nav>
+        </div>
+    </header>
 
-        <section id="header-summary" class="mb-12">
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <section id="header-summary" class="mb-12 pt-8">
             <div class="mb-8">
                 <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">Reporting Diário - Praças Lucas</h1>
                 <p class="text-base md:text-lg text-gray-500">Visão 360 Histórica das Praças</p>
+                <p id="last-update" class="text-sm text-gray-400 mt-1 font-medium"></p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger-fade-in">
                 <div id="total-tpv-card" class="bg-picpay-green-dark text-white p-4 md:p-6 rounded-2xl shadow-lg flex items-start justify-between interactive-item"></div>
                 <div id="avg-ticket-card" class="bg-white text-gray-800 p-4 md:p-6 rounded-2xl shadow-lg flex items-start justify-between interactive-item"></div>
                 <div id="total-transactions-card" class="bg-white text-gray-800 p-4 md:p-6 rounded-2xl shadow-lg flex items-start justify-between interactive-item"></div>
@@ -100,43 +122,61 @@
             </div>
         </section>
 
+        <hr class="my-12 border-gray-200">
+
         <section id="penetration-section" class="mb-12">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Penetração por Praça</h2>
-            <div id="penetration-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                </div>
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-bold text-gray-900">Penetração por Praça</h2>
+                <p class="text-gray-500 mt-1">Percentual de vidas alcançadas em relação à população total.</p>
+            </div>
+            <div id="penetration-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 stagger-fade-in">
+            </div>
         </section>
+
+        <hr class="my-12 border-gray-200">
 
         <section id="ranking-comparison" class="mb-12">
             <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4 sm:mb-0">Ranking de Praças</h2>
+                    <div class="mb-4 sm:mb-0">
+                        <h2 class="text-3xl font-bold text-gray-900">Ranking de Praças</h2>
+                        <p class="text-gray-500 mt-1">Compare o desempenho das praças por diferentes métricas.</p>
+                    </div>
                     <div id="ranking-controls" class="flex-wrap flex space-x-2 bg-gray-200 p-1 rounded-full">
-                        </div>
+                    </div>
                 </div>
                 <div class="h-[400px] md:h-[600px] relative">
                     <canvas id="rankingChart"></canvas>
                 </div>
             </div>
         </section>
+        
+        <hr class="my-12 border-gray-200">
 
         <section id="store-details">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Análise Individual das Praças</h2>
+             <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900">Análise Individual das Praças</h2>
+                <p class="text-gray-500 mt-1">Explore detalhes, tendências e comparações para cada praça.</p>
+            </div>
             <div class="flex flex-col lg:flex-row gap-8">
-                <div id="tabs-navigation" class="lg:w-1/4 flex-shrink-0">
-                    <div class="bg-white rounded-2xl shadow-lg p-3 space-y-2">
+                <div class="lg:w-1/3 xl:w-1/4 flex flex-col gap-6">
+                    <div class="bg-white rounded-2xl shadow-lg p-3 interactive-item">
+                        <h3 class="font-bold text-lg p-2 mb-1 text-gray-800">Selecione a Praça</h3>
+                        <div id="tabs-navigation" class="space-y-2">
                         </div>
-                </div>
-                <div id="tab-content" class="lg:w-3/4 bg-white rounded-2xl shadow-lg p-4 md:p-6 min-h-[800px]">
                     </div>
+                    <div id="wtd-comparison">
+                    </div>
+                </div>
+                <div id="tab-content" class="lg:w-2/3 xl:w-3/4 bg-white rounded-2xl shadow-lg p-4 md:p-6 min-h-[800px]">
+                </div>
             </div>
         </section>
 
-    </div>
+    </main>
 
     <script>
         // --- DATA SOURCE ---
-        // Para simplificar e permitir o uso local sem um servidor, os dados do "df.csv"
-        // foram incorporados diretamente nesta constante.
         const csvData = `
 dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
 07-01,DISTRITO FEDERAL,10471.39,126,126,126,83.106270
@@ -177,7 +217,7 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
 07-07,GOVERNO DO ESTADO DO PIAUÍ,40333.64,223,366,230,175.363652
 07-08,GOVERNO DO ESTADO DO PIAUÍ,35612.14,210,406,219,162.612511
 07-09,GOVERNO DO ESTADO DO PIAUÍ,31502.01,215,435,222,141.900946
-07-10,GOverno DO ESTADO DO PIAUÍ,65649.83,323,504,333,197.146637
+07-10,GOVERNO DO ESTADO DO PIAUÍ,65649.83,323,504,333,197.146637
 07-11,GOVERNO DO ESTADO DO PIAUÍ,37666.19,110,555,118,319.205000
 07-12,GOVERNO DO ESTADO DO PIAUÍ,15903.96,53,574,58,274.206207
 07-13,GOVERNO DO ESTADO DO PIAUÍ,7833.80,26,586,28,279.778571
@@ -333,12 +373,20 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
 
         // --- UTILITY FUNCTIONS ---
         const formatCurrency = (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const formatCurrencyNoCents = (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
         const formatNumber = (value) => (value || 0).toLocaleString('pt-BR');
         const formatPercent = (value, decimals = 2) => `${((value || 0) * 100).toFixed(decimals)}%`.replace('.', ',');
+        const shortenName = (name) => {
+            return name
+                .replace('MUNICIPIO DE ', '')
+                .replace('GOVERNO DO ESTADO DO ', '')
+                .replace('DISTRITO FEDERAL', 'DF')
+                .replace('MARANHÃO PÚBLICO', 'MARANHÃO')
+                .replace('VOLTA REDONDA', 'V. REDONDA');
+        };
         
         /**
          * Parses CSV text into a structured Map.
-         * @param {string} csvText - The raw CSV string.
          * @returns {{storesData: Map<string, object[]>, latestDate: Date}}
          */
         function parseData(csvText) {
@@ -392,7 +440,6 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
             return { storesData, latestDate };
         }
 
-
         function calculateTotals(data, population, latestDate) {
             let totalValorAntecipado = 0;
             let totalTransactions = 0;
@@ -439,6 +486,51 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
             return { totalValorAntecipado, totalTransactions, totalVidas: finalVidasAcumuladas, avgTicket, penetration, penetrationChange };
         }
 
+        function calculateWtdComparison(dailyData, latestDate, population) {
+            if (!dailyData || dailyData.length < 7 || !latestDate) return null;
+
+            const dataByDate = new Map(dailyData.map(d => [d.date, d]));
+
+            const getPeriodTotals = (endDate, days) => {
+                let tpv = 0, vidas = 0, endVidasAcum = 0;
+                let latestEntryInPeriod = null;
+                
+                for (let i = 0; i < days; i++) {
+                    const date = new Date(endDate);
+                    date.setUTCDate(date.getUTCDate() - i);
+                    const dateStr = `2025-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')}`;
+                    
+                    if (dataByDate.has(dateStr)) {
+                        const entry = dataByDate.get(dateStr);
+                        tpv += entry.valorAntecipado;
+                        vidas += entry.vidasDia;
+                        if (!latestEntryInPeriod) {
+                            latestEntryInPeriod = entry;
+                        }
+                    }
+                }
+                endVidasAcum = latestEntryInPeriod ? latestEntryInPeriod.vidasAcumuladas : 0;
+                return { tpv, vidas, endVidasAcum };
+            };
+
+            const today = new Date(latestDate);
+            const lastWeekEndDate = new Date(latestDate);
+            lastWeekEndDate.setUTCDate(lastWeekEndDate.getUTCDate() - 7);
+
+            const currentWeekData = getPeriodTotals(today, 7);
+            const previousWeekData = getPeriodTotals(lastWeekEndDate, 7);
+
+            const currentPenetration = population > 0 ? currentWeekData.endVidasAcum / population : 0;
+            const previousPenetration = population > 0 ? previousWeekData.endVidasAcum / population : 0;
+
+            return {
+                tpv: { current: currentWeekData.tpv, change: currentWeekData.tpv - previousWeekData.tpv },
+                vidas: { current: currentWeekData.vidas, change: currentWeekData.vidas - previousWeekData.vidas },
+                penetration: { current: currentPenetration, change: currentPenetration - previousPenetration }
+            };
+        }
+
+
         // --- RENDER FUNCTIONS ---
         function renderSummaryCards(storesData) {
             let totalValorAntecipado = 0;
@@ -461,25 +553,25 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
 
             document.getElementById('total-tpv-card').innerHTML = `
                 <div class="summary-card-content">
-                    <p class="text-sm font-medium text-green-200 mb-1">Valor Antecipado</p>
-                    <p class="text-2xl md:text-3xl font-bold">${formatCurrency(totalValorAntecipado)}</p>
+                    <p class="text-sm font-medium text-green-200 mb-1">Valor Antecipado Total</p>
+                    <p class="text-2xl md:text-3xl font-bold">${formatCurrencyNoCents(totalValorAntecipado)}</p>
                 </div>
-                <div class="bg-picpay-green-dark p-3 rounded-xl summary-card-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>`;
+                <div class="bg-black/10 p-3 rounded-xl summary-card-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>`;
             document.getElementById('avg-ticket-card').innerHTML = `
                  <div class="summary-card-content">
-                    <p class="text-sm font-medium text-gray-500 mb-1">Ticket Médio</p>
+                    <p class="text-sm font-medium text-gray-500 mb-1">Ticket Médio Geral</p>
                     <p class="text-2xl md:text-3xl font-bold text-gray-900">${formatCurrency(avgTicket)}</p>
                 </div>
                 <div class="bg-gray-100 p-3 rounded-xl summary-card-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-picpay-green-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg></div>`;
             document.getElementById('total-transactions-card').innerHTML = `
                  <div class="summary-card-content">
-                    <p class="text-sm font-medium text-gray-500 mb-1">Transações</p>
+                    <p class="text-sm font-medium text-gray-500 mb-1">Transações Totais</p>
                     <p class="text-2xl md:text-3xl font-bold text-gray-900">${formatNumber(totalTransactions)}</p>
                 </div>
                 <div class="bg-gray-100 p-3 rounded-xl summary-card-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-picpay-green-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10m16-5H4m16 0l-3-3m3 3l-3 3" /></svg></div>`;
             document.getElementById('total-vidas-card').innerHTML = `
                  <div class="summary-card-content">
-                    <p class="text-sm font-medium text-gray-500 mb-1">Vidas Únicas</p>
+                    <p class="text-sm font-medium text-gray-500 mb-1">Vidas Únicas Totais</p>
                     <p class="text-2xl md:text-3xl font-bold text-gray-900">${formatNumber(totalVidasAcumuladas)}</p>
                 </div>
                 <div class="bg-gray-100 p-3 rounded-xl summary-card-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-picpay-green-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>`;
@@ -490,21 +582,21 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
             container.innerHTML = '';
             sortedStores.forEach(store => {
                 const card = document.createElement('div');
-                card.className = 'bg-white p-4 rounded-2xl shadow-lg interactive-item';
+                card.className = 'bg-white p-5 rounded-2xl shadow-lg interactive-item';
                 
                 const evolutionText = store.penetrationChange
                     ? `<span class="text-xs font-bold ${store.penetrationChange > 0 ? 'text-green-500' : 'text-red-500'}">
-                        ${store.penetrationChange > 0 ? '+' : ''}${formatPercent(store.penetrationChange, 2)} vs sem. ant.
+                        ${store.penetrationChange > 0 ? '▲' : '▼'} ${formatPercent(Math.abs(store.penetrationChange), 2)} vs sem. ant.
                        </span>` 
                     : '';
 
                 card.innerHTML = `
-                    <h3 class="font-bold text-gray-800 truncate">${store.name}</h3>
+                    <h3 class="font-bold text-gray-800 truncate">${shortenName(store.name)}</h3>
                     <div class="flex items-baseline gap-x-2 mt-2">
-                        <p class="text-2xl md:text-3xl font-extrabold text-picpay-green-dark">${formatPercent(store.penetration)}</p>
+                        <p class="text-3xl md:text-4xl font-extrabold text-picpay-green-dark">${formatPercent(store.penetration)}</p>
                         ${evolutionText}
                     </div>
-                    <div class="text-xs text-gray-500 mt-1">
+                    <div class="text-xs text-gray-500 mt-2">
                         <span class="font-semibold">${formatNumber(store.totalVidas)}</span> Vidas de 
                         <span class="font-semibold">${formatNumber(POPULATION_DATA[store.name] || 0)}</span>
                     </div>
@@ -513,13 +605,13 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
             });
         }
 
-
         function renderRankingChart(stores, sortBy = 'totalValorAntecipado') {
             const sorted = [...stores].sort((a, b) => b[sortBy] - a[sortBy]);
             
             const ctx = document.getElementById('rankingChart').getContext('2d');
-            const labels = sorted.map(s => s.name);
+            const labels = sorted.map(s => shortenName(s.name));
             const data = sorted.map(s => s[sortBy]);
+            const fontSize = Math.max(12 - Math.floor(labels.length / 4), 10);
 
             const backgroundColors = Array(labels.length).fill('rgba(33, 194, 94, 0.2)');
             const borderColors = Array(labels.length).fill('rgba(33, 194, 94, 1)');
@@ -534,7 +626,7 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
             let dataFormatFn = formatCurrency;
             if (sortBy === 'penetration') {
                 tooltipLabel = 'Penetração';
-                dataFormatFn = formatPercent;
+                dataFormatFn = (v) => formatPercent(v, 2);
             } else if (sortBy === 'totalVidas' || sortBy === 'totalTransactions') {
                 tooltipLabel = 'Total';
                 dataFormatFn = formatNumber;
@@ -546,10 +638,10 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
                 data: { labels, datasets: [{ label: tooltipLabel, data, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 2, borderRadius: 8 }] },
                 options: {
                     indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1D824A', titleColor: '#fff', bodyColor: '#fff', callbacks: { label: (c) => `${tooltipLabel}: ${dataFormatFn(c.raw)}` } } },
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1D824A', titleFont: {weight: 'bold'}, bodyFont: {size: 14}, callbacks: { label: (c) => `${tooltipLabel}: ${dataFormatFn(c.raw)}` } } },
                     scales: {
                         x: { beginAtZero: true, grid: { color: '#E5E7EB' }, ticks: { color: '#6B7280', font: { weight: '600' }, callback: (v) => new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(v) } },
-                        y: { grid: { display: false }, ticks: { color: '#374151', font: { size: 10, weight: '600' } } }
+                        y: { grid: { display: false }, ticks: { color: '#374151', font: { size: fontSize, weight: '700' } } }
                     }
                 }
             });
@@ -559,42 +651,104 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
             const controls = [
                 { key: 'totalValorAntecipado', label: 'Valor' },
                 { key: 'totalVidas', label: 'Vidas' },
-                { key: 'totalTransactions', label: 'Transações' },
-                { key: 'penetration', label: 'Penetração' }
+                { key: 'penetration', label: 'Penetração' },
+                { key: 'totalTransactions', label: 'Transações' }
             ];
             const container = document.getElementById('ranking-controls');
             container.innerHTML = '';
             controls.forEach((control, index) => {
                 const button = document.createElement('button');
                 button.textContent = control.label;
-                button.className = `ranking-btn px-3 py-1.5 text-xs md:px-4 md:py-2 md:text-sm font-semibold rounded-full transition-colors duration-200 ${index === 0 ? 'active' : 'text-gray-600'}`;
+                button.className = `ranking-btn px-3 py-1.5 text-xs md:px-4 md:py-2 md:text-sm font-semibold rounded-full transition-all duration-300 ${index === 0 ? 'active' : 'text-gray-600 hover:bg-gray-300'}`;
                 button.onclick = () => {
-                    container.querySelectorAll('.ranking-btn').forEach(btn => btn.classList.remove('active'));
+                    container.querySelectorAll('.ranking-btn').forEach(btn => btn.classList.remove('active', 'hover:bg-gray-300'));
                     button.classList.add('active');
                     renderRankingChart(stores, control.key);
                 };
                 container.appendChild(button);
             });
         }
+        
+        function renderWtdComparison(store, latestDate) {
+            const container = document.getElementById('wtd-comparison');
+            if (!container) return;
+
+            const data = calculateWtdComparison(store.dailyData, latestDate, POPULATION_DATA[store.name]);
+            container.innerHTML = '';
+            if (!data) return;
+
+            const createCard = (title, value, change, isCurrency = false, isPP = false) => {
+                const changeColor = change > 0 ? 'text-green-600' : (change < 0 ? 'text-red-500' : 'text-gray-500');
+                const icon = change > 0 ? '▲' : (change < 0 ? '▼' : '▬');
+                
+                let valueFormatted, changeFormatted;
+
+                if (isPP) {
+                    valueFormatted = formatPercent(value);
+                    changeFormatted = `${change > 0 ? '+' : ''}${(change * 100).toFixed(1).replace('.',',')} p.p.`;
+                } else if (isCurrency) {
+                    valueFormatted = formatCurrency(value);
+                    changeFormatted = `${change > 0 ? '+' : ''}${formatCurrency(change).replace('R$','').trim()}`;
+                } else {
+                    valueFormatted = formatNumber(value);
+                    changeFormatted = `${change > 0 ? '+' : ''}${formatNumber(change)}`;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'bg-white p-3.5 rounded-xl shadow-lg interactive-item';
+                card.innerHTML = `
+                    <p class="text-sm text-gray-500 font-medium">${title}</p>
+                    <p class="text-xl font-bold text-gray-900 mt-1">${valueFormatted}</p>
+                    <div class="flex items-center text-sm font-bold mt-1.5 ${changeColor}">
+                        <span class="font-mono text-base mr-1">${icon}</span>
+                        <span>${changeFormatted}</span>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1">vs 7 dias anteriores</p>
+                `;
+                return card;
+            }
+
+            const header = document.createElement('h3');
+            header.className = "font-bold text-lg text-gray-800 mb-3 px-2";
+            header.textContent = 'Comparativo Semanal';
+            
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'space-y-3';
+
+            cardContainer.appendChild(createCard('Valor Antecipado', data.tpv.current, data.tpv.change, true));
+            cardContainer.appendChild(createCard('Novas Vidas', data.vidas.current, data.vidas.change));
+            cardContainer.appendChild(createCard('Penetração', data.penetration.current, data.penetration.change, false, true));
+            
+            container.appendChild(header);
+            container.appendChild(cardContainer);
+        }
 
         function setupStoreAnalysisTabs(sortedStores, latestDate) {
-            const navContainer = document.getElementById('tabs-navigation').querySelector('div');
+            const navContainer = document.getElementById('tabs-navigation');
             navContainer.innerHTML = '';
 
             sortedStores.forEach((store, index) => {
                 const tab = document.createElement('button');
-                tab.className = `tab-item interactive-item w-full text-left p-3 rounded-xl font-semibold ${index === 0 ? 'active' : ''}`;
-                tab.textContent = store.name;
+                tab.className = `tab-item interactive-item w-full text-left p-3 rounded-xl font-semibold transition-all duration-300 ${index === 0 ? 'active' : ''}`;
+                tab.textContent = shortenName(store.name);
                 tab.onclick = () => {
                     document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
+                    
+                    const contentContainer = document.getElementById('tab-content');
+                    contentContainer.classList.remove('fade-in');
+                    void contentContainer.offsetWidth; // Trigger reflow to restart animation
+                    contentContainer.classList.add('fade-in');
+
                     renderStoreDetails(store, latestDate);
+                    renderWtdComparison(store, latestDate);
                 };
                 navContainer.appendChild(tab);
             });
 
             if (sortedStores.length > 0) {
                 renderStoreDetails(sortedStores[0], latestDate);
+                renderWtdComparison(sortedStores[0], latestDate);
             }
         }
 
@@ -650,7 +804,7 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
                     <div class="xl:col-span-1 space-y-8">
                         <div>
                             <div class="flex justify-between items-center mb-3">
-                                <h4 class="font-bold text-lg text-gray-900">Calendário</h4>
+                                <h4 class="font-bold text-lg text-gray-900">Calendário de Atividade</h4>
                                 <div id="heatmap-controls" class="flex space-x-1 rounded-full bg-gray-200 p-1" role="group"></div>
                             </div>
                             <div id="calendar-heatmap"></div>
@@ -685,35 +839,30 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
                 return population > 0 ? entry.vidasAcumuladas / population : 0;
             });
             
-            renderTrendChart('trend-chart', labels, dailyValorAntecipado, dailyTransactions, dailyVidas, 'valorAntecipado');
+            renderTrendChart('trend-chart', labels, dailyValorAntecipado, dailyTransactions, dailyVidas);
             renderTicketChart('ticket-chart', labels, dailyAvgTicket);
             renderPenetrationChart('penetration-chart', labels, dailyCumulativePenetration);
             renderCalendarHeatmap(store, latestDate, 'valorAntecipado'); 
             renderInsights(store);
         }
         
-        function renderTrendChart(canvasId, labels, valorData, transData, vidasData, highlightedMetric) {
+        function renderTrendChart(canvasId, labels, valorData, transData, vidasData) {
             const ctx = document.getElementById(canvasId)?.getContext('2d');
             if(!ctx) return;
 
             const datasets = [
                 {
-                    type: 'line', label: 'Vidas', data: vidasData, yAxisID: 'y1', tension: 0.4, borderWidth: 2, pointRadius: 2,
-                    borderColor: highlightedMetric === 'vidas' ? '#f59e0b' : 'rgba(245, 158, 11, 0.4)',
-                    backgroundColor: highlightedMetric === 'vidas' ? '#f59e0b' : 'rgba(245, 158, 11, 0.4)',
-                    spanGaps: true,
-                },
-                {
-                    type: 'line', label: 'Transações', data: transData, yAxisID: 'y1', tension: 0.4, borderWidth: 2, pointRadius: 2, borderDash: [5, 5],
-                    borderColor: highlightedMetric === 'transactions' ? '#3b82f6' : 'rgba(59, 130, 246, 0.4)',
-                    backgroundColor: highlightedMetric === 'transactions' ? '#3b82f6' : 'rgba(59, 130, 246, 0.4)',
-                    spanGaps: true,
-                },
-                {
                     type: 'bar', label: 'Valor Antecipado', data: valorData, yAxisID: 'y', borderRadius: 4,
-                    backgroundColor: highlightedMetric === 'valorAntecipado' ? 'rgba(29, 130, 74, 0.7)' : 'rgba(29, 130, 74, 0.3)',
-                    borderColor: 'transparent',
-                }
+                    backgroundColor: 'rgba(29, 130, 74, 0.7)', borderColor: 'transparent',
+                },
+                {
+                    type: 'line', label: 'Transações', data: transData, yAxisID: 'y1', tension: 0.4, borderWidth: 2.5, pointRadius: 2, borderDash: [5, 5],
+                    borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.2)', spanGaps: true,
+                },
+                {
+                    type: 'line', label: 'Vidas', data: vidasData, yAxisID: 'y1', tension: 0.4, borderWidth: 2.5, pointRadius: 2,
+                    borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.2)', spanGaps: true,
+                },
             ];
 
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
@@ -722,9 +871,9 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
                 data: { labels, datasets },
                 options: {
                     responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { position: 'top', labels: { color: '#374151', font: { weight: '500' } } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.dataset.yAxisID === 'y' ? formatCurrency(c.raw) : formatNumber(c.raw)}` } } },
+                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, color: '#374151', font: { weight: '500' } } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.dataset.yAxisID === 'y' ? formatCurrency(c.raw) : formatNumber(c.raw)}` } } },
                     scales: {
-                        x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd' } }, grid: { display: false }, ticks: { color: '#6B7280' } },
+                        x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd/MM' } }, grid: { display: false }, ticks: { color: '#6B7280' } },
                         y: { position: 'left', beginAtZero: true, grid: { color: '#E5E7EB' }, ticks: { color: '#1D824A', font: { weight: 'bold' }, callback: (v) => new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(v) } },
                         y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { color: '#6B7280' } }
                     }
@@ -743,7 +892,7 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `Ticket Médio: ${formatCurrency(c.raw)}` } } },
                     scales: {
-                        x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd' } }, grid: { display: false }, ticks: { color: '#6B7280' } },
+                        x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd/MM' } }, grid: { display: false }, ticks: { color: '#6B7280' } },
                         y: { beginAtZero: false, grid: { color: '#E5E7EB' }, ticks: { color: '#0EA5E9', font: { weight: 'bold' }, callback: (v) => formatCurrency(v) } }
                     }
                 }
@@ -761,7 +910,7 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `Penetração: ${formatPercent(c.raw)}` } } },
                     scales: {
-                        x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd' } }, grid: { display: false }, ticks: { color: '#6B7280' } },
+                        x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd/MM' } }, grid: { display: false }, ticks: { color: '#6B7280' } },
                         y: { beginAtZero: true, grid: { color: '#E5E7EB' }, ticks: { color: '#8B5CF6', font: { weight: 'bold' }, callback: (v) => formatPercent(v) } }
                     }
                 }
@@ -783,7 +932,7 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
 
             const dailyDataMap = new Map(store.dailyData.map(d => [new Date(d.date).getUTCDate(), d]));
             
-            const values = Array.from({ length: daysInMonth }, (_, i) => dailyDataMap.get(i + 1)?.[metric.startsWith('valor') ? 'valorAntecipado' : metric] || 0);
+            const values = Array.from({ length: daysInMonth }, (_, i) => dailyDataMap.get(i + 1)?.[metric] || 0);
             const maxValue = Math.max(...values.filter(v => v > 0));
             
             let html = `<div class="calendar-grid">`;
@@ -791,7 +940,7 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
             for (let i = 0; i < firstDayOfWeek; i++) html += `<div class="calendar-day empty"></div>`;
 
             for (let day = 1; day <= daysInMonth; day++) {
-                const value = dailyDataMap.get(day)?.[metric.startsWith('valor') ? 'valorAntecipado' : metric] || 0;
+                const value = dailyDataMap.get(day)?.[metric] || 0;
                 const intensity = maxValue > 0 ? value / maxValue : 0;
                 let bgColor = '#f3f4f6';
                 if (value > 0) bgColor = `rgba(33, 194, 94, ${0.15 + intensity * 0.85})`;
@@ -818,8 +967,8 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
                 container.innerHTML = `<p>Dados insuficientes.</p>`;
                 return;
             }
-            const bestDay = store.dailyData.reduce((max, day) => day.valorAntecipado > max.valorAntecipado ? day : max);
-            const bestVidasDay = store.dailyData.reduce((max, day) => day.vidasDia > max.vidasDia ? day : max);
+            const bestDay = store.dailyData.reduce((max, day) => day.valorAntecipado > max.valorAntecipado ? day : max, store.dailyData[0]);
+            const bestVidasDay = store.dailyData.reduce((max, day) => day.vidasDia > max.vidasDia ? day : max, store.dailyData[0]);
 
             const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
             const weeklyTpv = new Array(7).fill(0).map(() => ({ total: 0, count: 0 }));
@@ -857,7 +1006,7 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
             
             insightsData.forEach(item => {
                 const card = document.createElement('div');
-                card.className = `bg-gray-100 p-3 rounded-xl flex items-center space-x-3`;
+                card.className = `bg-gray-50 p-3 rounded-xl flex items-center space-x-3`;
                 card.innerHTML = `
                     <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm ${item.color}">
                         ${item.icon}
@@ -880,6 +1029,10 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
                 if (!storesData || storesData.size === 0) {
                     throw new Error("Nenhum dado válido foi processado do arquivo CSV.");
                 }
+
+                if (latestDate) {
+                    document.getElementById('last-update').textContent = `Última atualização: ${latestDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+                }
                 
                 const storeCalculations = [...storesData.entries()]
                     .map(([name, data]) => ({ 
@@ -894,6 +1047,11 @@ dia_mes,account_name,tpv,vidas_dia,vidas_acumuladas,transacoes,ticket_medio
                 setupRankingControls(storeCalculations);
                 renderRankingChart(storeCalculations);
                 setupStoreAnalysisTabs(storeCalculations, latestDate);
+
+                // Add staggered animations
+                document.querySelectorAll('.stagger-fade-in > *').forEach((el, i) => {
+                    el.style.animationDelay = `${i * 100}ms`;
+                });
 
             } catch (error) {
                 console.error("Falha ao inicializar o dashboard:", error);
