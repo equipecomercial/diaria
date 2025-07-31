@@ -219,7 +219,7 @@
 07-07,GOVERNO DO ESTADO DO PIAUÍ,40333.64,223,366,230,376.952596
 07-08,GOVERNO DO ESTADO DO PIAUÍ,35612.14,210,406,219,427.529039
 07-09,GOVERNO DO ESTADO DO PIAUÍ,31502.01,215,435,222,471.445517
-07-10,GOVERNO DO ESTADO DO PIAUÍ,65649.83,323,504,333,537.159980
+0T-10,GOVERNO DO ESTADO DO PIAUÍ,65649.83,323,504,333,537.159980
 07-11,GOVERNO DO ESTADO DO PIAUÍ,37666.19,110,555,118,555.666342
 07-12,GOVERNO DO ESTADO DO PIAUÍ,15903.96,53,574,58,564.980453
 07-13,GOVERNO DO ESTADO DO PIAUÍ,7833.80,26,586,28,566.779147
@@ -302,7 +302,7 @@
 07-04,MUNICIPIO DE PATOS,1230.85,15,23,15,159.630435
 07-05,MUNICIPIO DE PATOS,1384.45,15,24,15,210.664583
 07-06,MUNICIPIO DE PATOS,1498.89,17,27,17,242.771852
-07-07,MUNICIPIO DE PATOS,1404.76,13,29,13,274.468966
+0T-07,MUNICIPIO DE PATOS,1404.76,13,29,13,274.468966
 07-08,MUNICIPIO DE PATOS,3440.51,19,32,20,356.253438
 07-09,MUNICIPIO DE PATOS,2630.89,22,36,22,389.750000
 07-10,MUNICIPIO DE PATOS,5636.59,31,43,33,457.385814
@@ -341,7 +341,7 @@
 07-26,MUNICIPIO DE PETROLINA,2505.77,13,373,15,187.568338
 07-27,MUNICIPIO DE PETROLINA,917.78,5,376,5,188.512686
 07-28,MUNICIPIO DE PETROLINA,1477.58,8,383,8,188.925196
-07-29,MUNICIPIO DE PETROLINA,1606.85,10,392,12,188.686735
+0T-29,MUNICIPIO DE PETROLINA,1606.85,10,392,12,188.686735
 07-30,MUNICIPIO DE PETROLINA,1801.38,8,399,8,189.891178
 07-01,MUNICIPIO DE VOLTA REDONDA,978.39,18,18,18,54.355000
 07-02,MUNICIPIO DE VOLTA REDONDA,3855.52,39,42,39,115.093095
@@ -412,20 +412,21 @@
                 vidas_dia: header.indexOf('vidas_dia'),
                 vidas_acumuladas: header.indexOf('vidas_acumuladas'),
                 transacoes: header.indexOf('transacoes'),
-                // ticket_medio is no longer read, it will be calculated
+                ticket_medio: header.indexOf('ticket_medio'),
             };
 
             let latestDate = null;
             const storesData = new Map();
 
             lines.forEach(line => {
-                const parts = line.trim().split(',');
+                // Fix for typos in data
+                const correctedLine = line.trim().replace('0T-', '07-');
+                const parts = correctedLine.split(',');
                 if (parts.length < header.length) return;
 
                 const accountName = parts[idx.account_name].trim().toUpperCase();
                 if (!accountName) return;
 
-                // FIX: Corrected potential typo in date format (e.g., 0-22 to 07-22)
                 const correctedDatePart = parts[idx.dia_mes].replace(/^0-/, '07-');
                 const dateStr = `2025-${correctedDatePart}`;
                 const currentDate = new Date(dateStr);
@@ -438,17 +439,16 @@
                     return;
                 }
 
-                const valorAntecipado = parseFloat(parts[idx.tpv]) || 0;
-                const transactions = parseInt(parts[idx.transacoes], 10) || 0;
-
                 const dailyEntry = {
                     date: dateStr,
                     accountName: accountName,
-                    valorAntecipado: valorAntecipado,
+                    valorAntecipado: parseFloat(parts[idx.tpv]) || 0,
                     vidasDia: parseInt(parts[idx.vidas_dia], 10) || 0,
                     vidasAcumuladas: parseInt(parts[idx.vidas_acumuladas], 10) || 0,
-                    transactions: transactions,
-                    avgTicket: transactions > 0 ? valorAntecipado / transactions : 0,
+                    transactions: parseInt(parts[idx.transacoes], 10) || 0,
+                    // --- MODIFICATION START: Use ticket_medio from CSV directly ---
+                    avgTicket: parseFloat(parts[idx.ticket_medio]) || 0,
+                    // --- MODIFICATION END ---
                 };
 
                 if (!storesData.has(accountName)) {
@@ -466,6 +466,10 @@
             let finalVidasAcumuladas = 0;
             let penetration = 0;
             let penetrationChange = 0;
+            
+            // Variables for simple average calculation
+            let sumOfDailyAvgTickets = 0;
+            let daysWithData = 0;
 
             if (data && data.length > 0) {
                 const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -476,7 +480,11 @@
                 sortedData.forEach(item => {
                     totalValorAntecipado += item.valorAntecipado;
                     totalTransactions += item.transactions;
+                    // Accumulate daily averages from CSV
+                    sumOfDailyAvgTickets += item.avgTicket;
                 });
+                
+                daysWithData = sortedData.length;
                 
                 if (population > 0 && latestDate) {
                     penetration = finalVidasAcumuladas / population;
@@ -502,7 +510,9 @@
                 }
             }
             
-            const avgTicket = totalTransactions > 0 ? totalValorAntecipado / totalTransactions : 0;
+            // Calculate simple average
+            const avgTicket = daysWithData > 0 ? sumOfDailyAvgTickets / daysWithData : 0;
+            
             return { totalValorAntecipado, totalTransactions, totalVidas: finalVidasAcumuladas, avgTicket, penetration, penetrationChange };
         }
 
@@ -562,12 +572,13 @@
 
         // --- RENDER FUNCTIONS ---
         function renderSummaryCards(storeCalculations) {
-            // FIX: Use pre-calculated totals for consistency
             const totalValorAntecipado = storeCalculations.reduce((sum, store) => sum + store.totalValorAntecipado, 0);
             const totalTransactions = storeCalculations.reduce((sum, store) => sum + store.totalTransactions, 0);
             const totalVidasAcumuladas = storeCalculations.reduce((sum, store) => sum + store.totalVidas, 0);
             
-            const avgTicket = totalTransactions > 0 ? totalValorAntecipado / totalTransactions : 0;
+            // Calculate simple average of store averages for the main KPI
+            const sumOfStoreAvgTickets = storeCalculations.reduce((sum, store) => sum + store.avgTicket, 0);
+            const avgTicket = storeCalculations.length > 0 ? sumOfStoreAvgTickets / storeCalculations.length : 0;
 
             document.getElementById('total-tpv-card').innerHTML = `
                 <div class="summary-card-content">
@@ -1135,15 +1146,19 @@ function renderInsights(store, latestDate) {
                 return;
             }
 
-            // FIX: Use total days in the period for a more consistent average calculation
-            const totalDaysInPeriod = latestDate.getUTCDate();
+            // MODIFICATION: Use only days with activity for average calculations.
+            const daysWithActivity = store.dailyData.filter(d => d.transactions > 0).length;
+            if (daysWithActivity === 0) {
+                container.innerHTML = `<p>Nenhuma atividade registrada para esta praça.</p>`;
+                return;
+            }
             
-            const averageTpv = store.totalValorAntecipado / totalDaysInPeriod;
+            const averageTpv = store.totalValorAntecipado / daysWithActivity;
             const totalVidasDia = store.dailyData.reduce((sum, day) => sum + day.vidasDia, 0);
-            const averageVidas = totalVidasDia > 0 ? totalVidasDia / totalDaysInPeriod : 0;
+            const averageVidas = totalVidasDia / daysWithActivity;
             
-            const bestDay = store.dailyData.reduce((max, day) => day.valorAntecipado > max.valorAntecipado ? day : max, store.dailyData[0]);
-            const bestVidasDay = store.dailyData.reduce((max, day) => day.vidasDia > max.vidasDia ? day : max, store.dailyData[0]);
+            const bestDay = store.dailyData.reduce((max, day) => day.valorAntecipado > max.valorAntecipado ? day : max, { valorAntecipado: -1 });
+            const bestVidasDay = store.dailyData.reduce((max, day) => day.vidasDia > max.vidasDia ? day : max, { vidasDia: -1 });
 
             const bestDayPctAboveAvg = averageTpv > 0 ? (bestDay.valorAntecipado - averageTpv) / averageTpv : Infinity;
             const bestVidasDayPctAboveAvg = averageVidas > 0 ? (bestVidasDay.vidasDia - averageVidas) / averageVidas : Infinity;
@@ -1228,7 +1243,7 @@ function renderInsights(store, latestDate) {
                     }))
                     .sort((a, b) => b.totalValorAntecipado - a.totalValorAntecipado);
 
-                renderSummaryCards(storeCalculations); // Pass calculations instead of raw data
+                renderSummaryCards(storeCalculations);
                 renderPenetrationCards(storeCalculations);
                 setupRankingControls(storeCalculations);
                 renderRankingChart(storeCalculations);
