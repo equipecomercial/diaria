@@ -1033,9 +1033,14 @@
                     throw new Error("Nenhum dado válido foi processado da planilha. Verifique o formato.");
                 }
 
-                if (latestDate) {
-                    document.getElementById('last-update').textContent = `Última atualização: ${latestDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
-                }
+          if (latestDate) {
+    document.getElementById('last-update').textContent = `Última atualização: ${latestDate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'UTC'
+    })}`;
+}
                 
                 const storeCalculations = [...storesData.entries()]
                     .map(([name, data]) => ({ 
