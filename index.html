@@ -1,1091 +1,153 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="scroll-smooth">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporting Diário - Praças Lucas</title>
+    <title>Seleção de Dashboard</title>
     <link rel="icon" href="ico.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* Estilos customizados e branding PicPay */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #F0F1F5;
-        }
-        .picpay-green-dark { color: #1D824A; }
-        .bg-picpay-green-dark { background-color: #1D824A; }
-        .picpay-green-light { color: #21C25E; }
-        .bg-picpay-green-light { background-color: #21C25E; }
-        
-        /* Animações e Transições */
-        .interactive-item {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .interactive-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-        }
-        .tab-item.active {
-            background-image: linear-gradient(to right, #1D824A, #21C25E);
-            color: white;
-            font-weight: 700;
-            box-shadow: 0 6px 15px rgba(29, 130, 74, 0.3);
-            transform: translateY(-2px) scale(1.03);
-        }
-        .ranking-btn.active {
-            background-color: #21C25E;
-            color: white;
-            box-shadow: 0 4px 12px rgba(33, 194, 94, 0.2);
+            overflow: hidden; /* Previne barras de rolagem durante as transições */
         }
 
-        /* Animação de Fade-in */
+        .card-base {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .card-base:hover {
+            transform: translateY(-10px) scale(1.03);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        /* Container principal que gerencia a visibilidade */
+        .view-container {
+            width: 100%;
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+
+        /* --- CORREÇÃO PROFUNDA NA LÓGICA DE EXIBIÇÃO --- */
+
+        /* Estado inicial da seleção de representantes (visível e no fluxo) */
+        #selection-view {
+            opacity: 1;
+            transform: scale(1);
+            position: relative;
+        }
+        
+        /* Estado inicial das opções (invisível e fora do fluxo) */
+        #options-view {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            position: absolute; /* Fora do fluxo do layout */
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+
+        /* Quando 'lucas-active' é adicionado ao body... */
+        body.lucas-active #selection-view {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            position: absolute; /* Tira a primeira tela do fluxo */
+            z-index: -1; /* Garante que ela fique para trás */
+        }
+
+        body.lucas-active #options-view {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+            position: relative; /* Coloca a segunda tela de volta no fluxo */
+        }
+        
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .fade-in {
-            animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-        .stagger-fade-in > * {
+        
+        .option-card {
             opacity: 0;
-            animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
-
-        /* Estilo para o calendário heatmap */
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-        }
-        .calendar-day {
-            aspect-ratio: 1 / 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            transition: all 0.2s ease-in-out;
-        }
-        .calendar-day.empty { background-color: transparent; }
-        .calendar-day-header {
-            font-weight: 600;
-            font-size: 0.7rem;
-            text-align: center;
-            color: #6B7280;
-        }
-        .summary-card-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            flex-grow: 1;
-            min-width: 0; /* Fix para quebra de layout em zoom alto */
-        }
-        .summary-card-icon { flex-shrink: 0; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="flex items-center justify-center min-h-screen p-4">
 
-    <header class="bg-white/90 backdrop-blur-lg shadow-sm sticky top-0 z-50 w-full">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-            <div class="text-xl font-extrabold picpay-green-dark">Dashboard de Praças</div>
-            <nav class="hidden md:flex items-center space-x-4">
-                <a href="#header-summary" class="bg-transparent hover:bg-white text-gray-600 hover:text-picpay-green-dark font-semibold transform hover:-translate-y-0.5 hover:shadow-md transition-all text-sm px-3 py-2 rounded-md">Resumo Geral</a>
-                <a href="#penetration-section" class="bg-transparent hover:bg-white text-gray-600 hover:text-picpay-green-dark font-semibold transform hover:-translate-y-0.5 hover:shadow-md transition-all text-sm px-3 py-2 rounded-md">Penetração</a>
-                <a href="#ranking-comparison" class="bg-transparent hover:bg-white text-gray-600 hover:text-picpay-green-dark font-semibold transform hover:-translate-y-0.5 hover:shadow-md transition-all text-sm px-3 py-2 rounded-md">Ranking</a>
-                <a href="#store-details" class="bg-transparent hover:bg-white text-gray-600 hover:text-picpay-green-dark font-semibold transform hover:-translate-y-0.5 hover:shadow-md transition-all text-sm px-3 py-2 rounded-md">Análise Individual</a>
-            </nav>
+    <main class="w-full max-w-4xl mx-auto text-center">
+
+        <div id="selection-view" class="view-container">
+            <header class="mb-10">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900">Representantes</h1>
+                <p class="text-lg text-gray-500 mt-2">Selecione um representante para ver os dashboards.</p>
+            </header>
+
+            <div class="flex flex-col md:flex-row justify-center items-stretch gap-8 md:gap-10">
+                <a id="lucas-card" href="#" class="card-base bg-white w-full md:w-80 p-8 rounded-2xl shadow-lg flex flex-col justify-center items-center">
+                    <div class="bg-blue-500 p-5 rounded-full mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800">Lucas</h2>
+                </a>
+
+                <a href="ias_publico.html" class="card-base bg-white w-full md:w-80 p-8 rounded-2xl shadow-lg flex flex-col justify-center items-center">
+                    <div class="bg-[#1D824A] p-5 rounded-full mb-5">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800">Iasmim</h2>
+                </a>
+            </div>
         </div>
-    </header>
 
-    <main id="main-content" class="container mx-auto p-4 sm:p-6 lg:p-8">
-
-        <section id="header-summary" class="mb-12 pt-8">
-            <div class="mb-8">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">Reporting Diário - Praças Lucas</h1>
-                <p class="text-base md:text-lg text-gray-500 mt-2">Visão 360 Histórica das Praças</p>
-                <p id="last-update" class="text-sm text-gray-400 mt-1 font-medium"></p>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger-fade-in">
-                <div id="total-tpv-card" class="bg-gradient-to-br from-[#1D824A] to-[#21C25E] text-white p-4 md:p-6 rounded-2xl shadow-lg flex items-start justify-between interactive-item"></div>
-                <div id="avg-ticket-card" class="bg-white text-gray-800 p-4 md:p-6 rounded-2xl shadow-lg flex items-start justify-between interactive-item"></div>
-                <div id="total-transactions-card" class="bg-white text-gray-800 p-4 md:p-6 rounded-2xl shadow-lg flex items-start justify-between interactive-item"></div>
-                <div id="total-vidas-card" class="bg-white text-gray-800 p-4 md:p-6 rounded-2xl shadow-lg flex items-start justify-between interactive-item"></div>
-            </div>
-        </section>
-
-        <hr class="my-12 border-gray-200">
-
-        <section id="penetration-section" class="mb-12">
-            <div class="text-center mb-6">
-                <h2 class="text-3xl font-bold text-gray-900">Penetração por Praça</h2>
-                <p class="text-gray-500 mt-1">Percentual de vidas alcançadas em relação à população total.</p>
-            </div>
-            <div id="penetration-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 stagger-fade-in">
-            </div>
-        </section>
-
-        <hr class="my-12 border-gray-200">
-
-        <section id="ranking-comparison" class="mb-12">
-            <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                    <div class="mb-4 sm:mb-0">
-                        <h2 class="text-3xl font-bold text-gray-900">Ranking de Praças</h2>
-                        <p class="text-gray-500 mt-1">Compare o desempenho das praças por diferentes métricas.</p>
-                    </div>
-                    <div id="ranking-controls" class="flex-wrap flex space-x-2 bg-gray-200 p-1 rounded-full">
-                    </div>
+        <div id="options-view" class="view-container">
+            <header class="mb-10">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900">Dashboards de Lucas</h1>
+                <p class="text-lg text-gray-500 mt-2">Selecione o tipo de dashboard para visualizar.</p>
+            </header>
+            
+            <div class="flex flex-col items-center justify-center gap-8">
+                <div class="flex flex-col md:flex-row justify-center items-center gap-8">
+                    <a href="lucas_publico.html" class="card-base option-card bg-gradient-to-br from-blue-500 to-blue-400 w-full md:w-80 h-56 p-6 rounded-2xl shadow-lg flex flex-col justify-center text-white" style="animation-delay: 150ms;">
+                        <h3 class="text-2xl font-bold">Dashboard Público</h3>
+                        <p class="mt-2 opacity-90">Análise de dados públicos</p>
+                    </a>
+                    <a href="lucas_privado.html" class="card-base option-card bg-gray-700 text-white w-full md:w-80 h-56 p-6 rounded-2xl shadow-lg flex flex-col justify-center" style="animation-delay: 250ms;">
+                        <h3 class="text-2xl font-bold">Dashboard Privado</h3>
+                        <p class="mt-2 opacity-90">Análise de dados internos</p>
+                    </a>
                 </div>
-                <div class="h-[400px] md:h-[600px] relative">
-                    <canvas id="rankingChart"></canvas>
-                </div>
+                <button id="back-button" class="text-blue-500 font-semibold option-card hover:underline" style="animation-delay: 350ms;">Voltar para o menu</button>
             </div>
-        </section>
-        
-        <hr class="my-12 border-gray-200">
-
-        <section id="store-details">
-             <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-900">Análise Individual das Praças</h2>
-                <p class="text-gray-500 mt-1">Explore detalhes, tendências e comparações para cada praça.</p>
-            </div>
-            <div class="flex flex-col lg:flex-row gap-8">
-                <div class="lg:w-1/3 xl:w-1/4 flex flex-col gap-6">
-                    <div class="bg-white rounded-2xl shadow-lg p-4">
-                        <h3 class="font-bold text-base uppercase text-gray-500 tracking-wider border-b pb-2 mb-3">Selecione a Praça</h3>
-                        <div id="tabs-navigation" class="space-y-2">
-                        </div>
-                    </div>
-                    <div id="wtd-comparison">
-                    </div>
-                </div>
-                <div id="tab-content" class="lg:w-2/3 xl:w-3/4 bg-white rounded-2xl shadow-lg p-4 md:p-6 min-h-[800px]">
-                </div>
-            </div>
-        </section>
+        </div>
 
     </main>
 
     <script>
-        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJSNOfwx9ai1_6-XoYCO4xlegtxqEWa8h6MKYidy61upIF2P-9bVgE0P_BfXgEqOGky1Hjpz1VRTW-/pub?gid=0&single=true&output=csv';
+        document.addEventListener('DOMContentLoaded', () => {
+            const body = document.body;
+            const lucasCard = document.getElementById('lucas-card');
+            const backButton = document.getElementById('back-button');
 
-        const POPULATION_DATA = {
-            'MUNICIPIO DE BOA VISTA': 13078,
-            'DISTRITO FEDERAL': 180350,
-            'GOVERNO DO ESTADO DO PIAUÍ': 119000,
-            'MUNICIPIO DE PATOS': 2070,
-            'MUNICIPIO DE PETROLINA': 11669,
-            'MUNICIPIO DE VOLTA REDONDA': 15426,
-            'MARANHÃO PÚBLICO': 84400,
-            'MUNICIPIO DE JAGUARIUNA': 1924,
-        };
-        
-        let chartInstances = {};
-
-        // --- UTILITY FUNCTIONS ---
-        const formatCurrency = (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const formatCurrencyNoCents = (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
-        const formatNumber = (value) => (value || 0).toLocaleString('pt-BR');
-        const formatPercent = (value, decimals = 2) => `${((value || 0) * 100).toFixed(decimals)}%`.replace('.', ',');
-        const shortenName = (name) => {
-            return name
-                .replace('MUNICIPIO DE ', '')
-                .replace('GOVERNO DO ESTADO DO ', '')
-                .replace('DISTRITO FEDERAL', 'DF')
-                .replace('MARANHÃO PÚBLICO', 'MARANHÃO')
-                .replace('VOLTA REDONDA', 'V. REDONDA');
-        };
-        
-        /**
-         * Parses CSV text into a structured Map.
-         * @returns {{storesData: Map<string, object[]>, latestDate: Date}}
-         */
-        function parseData(csvText) {
-            const lines = csvText.trim().split('\n');
-            const header = lines.shift().trim().split(',');
-            
-            const idx = {
-                dia_mes: header.indexOf('dia_mes'),
-                account_name: header.indexOf('account_name'),
-                tpv: header.indexOf('tpv'),
-                vidas_dia: header.indexOf('vidas_dia'),
-                vidas_acumuladas: header.indexOf('vidas_acumuladas'),
-                transacoes: header.indexOf('transacoes'),
-                ticket_medio: header.indexOf('ticket_medio'),
-            };
-
-            let latestDate = null;
-            const storesData = new Map();
-
-            lines.forEach(line => {
-                // Fix for typos in data
-                const correctedLine = line.trim().replace('0T-', '07-');
-                const parts = correctedLine.split(',');
-                if (parts.length < header.length) return;
-
-                const accountName = parts[idx.account_name].trim().toUpperCase();
-                if (!accountName) return;
-
-                const correctedDatePart = parts[idx.dia_mes].replace(/^0-/, '07-');
-                const dateStr = `2025-${correctedDatePart}`;
-                const currentDate = new Date(dateStr);
-                if (!isNaN(currentDate.getTime())) {
-                     if (!latestDate || currentDate > latestDate) {
-                        latestDate = currentDate;
-                    }
-                } else {
-                    console.warn(`Invalid date found, skipping line: ${line}`);
-                    return;
-                }
-
-                const dailyEntry = {
-                    date: dateStr,
-                    accountName: accountName,
-                    valorAntecipado: parseFloat(parts[idx.tpv]) || 0,
-                    vidasDia: parseInt(parts[idx.vidas_dia], 10) || 0,
-                    vidasAcumuladas: parseInt(parts[idx.vidas_acumuladas], 10) || 0,
-                    transactions: parseInt(parts[idx.transacoes], 10) || 0,
-                    avgTicket: parseFloat(parts[idx.ticket_medio]) || 0,
-                };
-
-                if (!storesData.has(accountName)) {
-                    storesData.set(accountName, []);
-                }
-                storesData.get(accountName).push(dailyEntry);
-            });
-            
-            return { storesData, latestDate };
-        }
-
-        function calculateTotals(data, population, latestDate) {
-            let totalValorAntecipado = 0;
-            let totalTransactions = 0;
-            let finalVidasAcumuladas = 0;
-            let penetration = 0;
-            let penetrationChange = 0;
-            
-            let sumOfDailyAvgTickets = 0;
-            let daysWithData = 0;
-
-            if (data && data.length > 0) {
-                const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
-                const dataByDate = new Map(sortedData.map(d => [d.date, d]));
-                
-                finalVidasAcumuladas = sortedData[sortedData.length - 1].vidasAcumuladas;
-
-                sortedData.forEach(item => {
-                    totalValorAntecipado += item.valorAntecipado;
-                    totalTransactions += item.transactions;
-                    sumOfDailyAvgTickets += item.avgTicket;
-                });
-                
-                daysWithData = sortedData.length;
-                
-                if (population > 0 && latestDate) {
-                    penetration = finalVidasAcumuladas / population;
-                    
-                    let sevenDaysAgo = new Date(latestDate);
-                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                    
-                    let sevenDaysAgoData = null;
-                    for(let i = 0; i < 7; i++){
-                        const dateToTry = new Date(sevenDaysAgo);
-                        dateToTry.setDate(dateToTry.getDate()-i);
-                        const dateToTryStr = `2025-${(dateToTry.getUTCMonth() + 1).toString().padStart(2, '0')}-${dateToTry.getUTCDate().toString().padStart(2, '0')}`;
-                        if(dataByDate.has(dateToTryStr)){
-                           sevenDaysAgoData = dataByDate.get(dateToTryStr);
-                           break;
-                        }
-                    }
-
-                    if (sevenDaysAgoData) {
-                        const previousPenetration = sevenDaysAgoData.vidasAcumuladas / population;
-                        penetrationChange = penetration - previousPenetration;
-                    }
-                }
-            }
-            
-            const avgTicket = daysWithData > 0 ? sumOfDailyAvgTickets / daysWithData : 0;
-            
-            return { totalValorAntecipado, totalTransactions, totalVidas: finalVidasAcumuladas, avgTicket, penetration, penetrationChange };
-        }
-
-        function calculateWtdComparison(dailyData, latestDate, population) {
-            if (!dailyData || dailyData.length < 7 || !latestDate) return null;
-
-            const dataByDate = new Map(dailyData.map(d => [d.date, d]));
-
-            const getPeriodTotals = (endDate, days) => {
-                let tpv = 0, vidas = 0, endVidasAcum = 0;
-                let latestEntryInPeriod = null;
-                
-                for (let i = 0; i < days; i++) {
-                    const date = new Date(endDate);
-                    date.setUTCDate(date.getUTCDate() - i);
-                    const dateStr = `2025-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')}`;
-                    
-                    if (dataByDate.has(dateStr)) {
-                        const entry = dataByDate.get(dateStr);
-                        tpv += entry.valorAntecipado;
-                        vidas += entry.vidasDia;
-                        if (!latestEntryInPeriod) {
-                            latestEntryInPeriod = entry;
-                        }
-                    }
-                }
-                endVidasAcum = latestEntryInPeriod ? latestEntryInPeriod.vidasAcumuladas : 0;
-                return { tpv, vidas, endVidasAcum };
-            };
-
-            const today = new Date(latestDate);
-            const lastWeekEndDate = new Date(latestDate);
-            lastWeekEndDate.setUTCDate(lastWeekEndDate.getUTCDate() - 7);
-
-            const currentWeekData = getPeriodTotals(today, 7);
-            const previousWeekData = getPeriodTotals(lastWeekEndDate, 7);
-            
-            if (previousWeekData.tpv === 0 && previousWeekData.vidas === 0) return null;
-
-            const currentPenetration = population > 0 ? currentWeekData.endVidasAcum / population : 0;
-            const previousPenetration = population > 0 ? previousWeekData.endVidasAcum / population : 0;
-
-            const tpvChange = currentWeekData.tpv - previousWeekData.tpv;
-            const vidasChange = currentWeekData.vidas - previousWeekData.vidas;
-            const penetrationChange = currentPenetration - previousPenetration;
-
-            const tpvPercentChange = previousWeekData.tpv !== 0 ? tpvChange / previousWeekData.tpv : (currentWeekData.tpv > 0 ? Infinity : 0);
-            const vidasPercentChange = previousWeekData.vidas !== 0 ? vidasChange / previousWeekData.vidas : (currentWeekData.vidas > 0 ? Infinity : 0);
-
-            return {
-                tpv: { current: currentWeekData.tpv, change: tpvChange, percentChange: tpvPercentChange },
-                vidas: { current: currentWeekData.vidas, change: vidasChange, percentChange: vidasPercentChange },
-                penetration: { current: currentPenetration, change: penetrationChange }
-            };
-        }
-
-
-        // --- RENDER FUNCTIONS ---
-        function renderSummaryCards(storeCalculations) {
-            const totalValorAntecipado = storeCalculations.reduce((sum, store) => sum + store.totalValorAntecipado, 0);
-            const totalTransactions = storeCalculations.reduce((sum, store) => sum + store.totalTransactions, 0);
-            const totalVidasAcumuladas = storeCalculations.reduce((sum, store) => sum + store.totalVidas, 0);
-            
-            const sumOfStoreAvgTickets = storeCalculations.reduce((sum, store) => sum + store.avgTicket, 0);
-            const avgTicket = storeCalculations.length > 0 ? sumOfStoreAvgTickets / storeCalculations.length : 0;
-
-            document.getElementById('total-tpv-card').innerHTML = `
-                <div class="summary-card-content">
-                    <p class="text-sm font-medium text-green-200 mb-1">Valor Antecipado Total</p>
-                    <p class="text-2xl md:text-3xl font-bold">${formatCurrencyNoCents(totalValorAntecipado)}</p>
-                </div>
-                <div class="p-3 rounded-xl summary-card-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>`;
-            document.getElementById('avg-ticket-card').innerHTML = `
-                 <div class="summary-card-content">
-                    <p class="text-sm font-medium text-gray-500 mb-1">Ticket Médio Geral</p>
-                    <p class="text-2xl md:text-3xl font-bold text-gray-900">${formatCurrency(avgTicket)}</p>
-                </div>
-                <div class="bg-gray-100 p-3 rounded-xl summary-card-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-picpay-green-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg></div>`;
-            document.getElementById('total-transactions-card').innerHTML = `
-                 <div class="summary-card-content">
-                    <p class="text-sm font-medium text-gray-500 mb-1">Transações Totais</p>
-                    <p class="text-2xl md:text-3xl font-bold text-gray-900">${formatNumber(totalTransactions)}</p>
-                </div>
-                <div class="bg-gray-100 p-3 rounded-xl summary-card-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-picpay-green-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10m16-5H4m16 0l-3-3m3 3l-3 3" /></svg></div>`;
-            document.getElementById('total-vidas-card').innerHTML = `
-                 <div class="summary-card-content">
-                    <p class="text-sm font-medium text-gray-500 mb-1">Vidas Únicas Totais</p>
-                    <p class="text-2xl md:text-3xl font-bold text-gray-900">${formatNumber(totalVidasAcumuladas)}</p>
-                </div>
-                <div class="bg-gray-100 p-3 rounded-xl summary-card-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-picpay-green-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>`;
-        }
-        
-        function renderPenetrationCards(sortedStores) {
-            const container = document.getElementById('penetration-container');
-            container.innerHTML = '';
-            sortedStores.forEach(store => {
-                const card = document.createElement('div');
-                card.className = 'bg-white p-5 rounded-2xl shadow-lg interactive-item';
-                
-                const evolutionText = store.penetrationChange
-                    ? `<span class="text-xs font-bold ${store.penetrationChange > 0 ? 'text-green-500' : 'text-red-500'}">
-                        ${store.penetrationChange > 0 ? '▲' : '▼'} ${formatPercent(Math.abs(store.penetrationChange), 2)} vs sem. ant.
-                       </span>` 
-                    : '';
-
-                card.innerHTML = `
-                    <h3 class="font-bold text-gray-800 truncate">${shortenName(store.name)}</h3>
-                    <div class="flex items-baseline gap-x-2 mt-2">
-                        <p class="text-3xl md:text-4xl font-extrabold text-picpay-green-dark">${formatPercent(store.penetration)}</p>
-                        ${evolutionText}
-                    </div>
-                    <div class="text-xs text-gray-500 mt-2">
-                        <span class="font-semibold">${formatNumber(store.totalVidas)}</span> Vidas de 
-                        <span class="font-semibold">${formatNumber(POPULATION_DATA[store.name] || 0)}</span>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function renderRankingChart(stores, sortBy = 'totalValorAntecipado') {
-            const sorted = [...stores].sort((a, b) => b[sortBy] - a[sortBy]);
-            
-            const ctx = document.getElementById('rankingChart').getContext('2d');
-            const labels = sorted.map(s => shortenName(s.name));
-            const data = sorted.map(s => s[sortBy]);
-            const fontSize = Math.max(12 - Math.floor(labels.length / 4), 10);
-
-            const backgroundColors = Array(labels.length).fill('rgba(33, 194, 94, 0.2)');
-            const borderColors = Array(labels.length).fill('rgba(33, 194, 94, 1)');
-            
-            if(labels.length > 2) {
-                backgroundColors[0] = 'rgba(255, 215, 0, 0.4)'; borderColors[0] = 'rgba(255, 215, 0, 1)';
-                backgroundColors[1] = 'rgba(192, 192, 192, 0.4)'; borderColors[1] = 'rgba(192, 192, 192, 1)';
-                backgroundColors[2] = 'rgba(205, 127, 50, 0.4)'; borderColors[2] = 'rgba(205, 127, 50, 1)';
-            }
-            
-            let tooltipLabel = 'Valor';
-            let dataFormatFn = formatCurrency;
-            if (sortBy === 'penetration') {
-                tooltipLabel = 'Penetração';
-                dataFormatFn = (v) => formatPercent(v, 2);
-            } else if (sortBy === 'totalVidas' || sortBy === 'totalTransactions') {
-                tooltipLabel = 'Total';
-                dataFormatFn = formatNumber;
-            }
-
-            if (chartInstances.ranking) chartInstances.ranking.destroy();
-            chartInstances.ranking = new Chart(ctx, {
-                type: 'bar',
-                data: { labels, datasets: [{ label: tooltipLabel, data, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 2, borderRadius: 8 }] },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 1000
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#1D824A',
-                            titleFont: { weight: 'bold' },
-                            bodyFont: { size: 14 },
-                            callbacks: {
-                                label: (c) => `${tooltipLabel}: ${dataFormatFn(c.raw)}`
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: { color: '#E5E7EB' },
-                            ticks: {
-                                color: '#6B7280',
-                                font: { weight: '600' },
-                                callback: (v) => new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(v)
-                            }
-                        },
-                        y: {
-                            grid: { display: false },
-                            ticks: {
-                                color: '#374151',
-                                font: { size: fontSize, weight: '700' }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        function setupRankingControls(stores) {
-            const controls = [
-                { key: 'totalValorAntecipado', label: 'Valor' },
-                { key: 'totalVidas', label: 'Vidas' },
-                { key: 'penetration', label: 'Penetração' },
-                { key: 'totalTransactions', label: 'Transações' }
-            ];
-            const container = document.getElementById('ranking-controls');
-            container.innerHTML = '';
-            controls.forEach((control, index) => {
-                const button = document.createElement('button');
-                button.textContent = control.label;
-                button.className = `ranking-btn px-3 py-1.5 text-xs md:px-4 md:py-2 md:text-sm font-semibold rounded-full transition-all duration-300 ${index === 0 ? 'active' : 'text-gray-600 hover:bg-gray-300'}`;
-                button.onclick = () => {
-                    container.querySelectorAll('.ranking-btn').forEach(btn => btn.classList.remove('active', 'hover:bg-gray-300'));
-                    button.classList.add('active');
-                    renderRankingChart(stores, control.key);
-                };
-                container.appendChild(button);
-            });
-        }
-        
-        function renderWtdComparison(store, latestDate) {
-            const container = document.getElementById('wtd-comparison');
-            if (!container) return;
-
-            const data = calculateWtdComparison(store.dailyData, latestDate, POPULATION_DATA[store.name]);
-            container.innerHTML = '';
-            
-            const header = document.createElement('h3');
-            header.className = "font-bold text-lg text-gray-800 mb-3 px-1";
-            header.textContent = 'Comparativo Semanal';
-            container.appendChild(header);
-
-            if (data) {
-                const createCard = (title, data, isCurrency = false, isPP = false) => {
-                    const changeColor = data.change > 0 ? 'text-green-600' : (data.change < 0 ? 'text-red-500' : 'text-gray-500');
-                    const icon = data.change > 0 ? '▲' : (data.change < 0 ? '▼' : '▬');
-                    
-                    let valueFormatted, changeFormatted, percentText = '';
-
-                    if (isPP) {
-                        valueFormatted = formatPercent(data.current, 1);
-                        changeFormatted = `${data.change > 0 ? '+' : ''}${(data.change * 100).toFixed(1).replace('.',',')} p.p.`;
-                    } else {
-                         valueFormatted = isCurrency ? formatCurrency(data.current) : formatNumber(data.current);
-                         changeFormatted = `${data.change > 0 ? '+' : ''}${isCurrency ? formatCurrency(data.change).replace('R$','').trim() : formatNumber(data.change)}`;
-
-                        if (isFinite(data.percentChange) && data.percentChange !== 0) {
-                             percentText = ` <span class="font-normal opacity-80">(${formatPercent(Math.abs(data.percentChange), 0)})</span>`;
-                        } else if (!isFinite(data.percentChange) && data.percentChange > 0) {
-                            percentText = ` <span class="font-normal opacity-80">(Novo)</span>`;
-                        }
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = 'bg-white p-3.5 rounded-xl shadow-lg interactive-item';
-                    card.innerHTML = `
-                        <p class="text-sm text-gray-500 font-medium">${title}</p>
-                        <p class="text-xl font-bold text-gray-900 mt-1">${valueFormatted}</p>
-                        <div class="flex items-center text-sm font-bold mt-1.5 ${changeColor}">
-                            <span class="font-mono text-base mr-1">${icon}</span>
-                            <span>${changeFormatted}${percentText}</span>
-                        </div>
-                        <p class="text-[10px] text-gray-400 mt-1">vs 7 dias anteriores</p>
-                    `;
-                    return card;
-                }
-                
-                const cardContainer = document.createElement('div');
-                cardContainer.className = 'space-y-3';
-
-                cardContainer.appendChild(createCard('Valor Antecipado', data.tpv, true));
-                cardContainer.appendChild(createCard('Novas Vidas', data.vidas));
-                cardContainer.appendChild(createCard('Penetração', data.penetration, false, true));
-                
-                container.appendChild(cardContainer);
-            } else {
-                const placeholder = document.createElement('div');
-                placeholder.className = 'bg-white p-4 rounded-xl shadow-lg h-[324px] flex flex-col justify-center items-center text-center border';
-                placeholder.innerHTML = `
-                    <div class="text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p class="mt-2 font-semibold text-gray-600">Dados Insuficientes</p>
-                        <p class="text-xs text-gray-500 mt-1">Não há histórico para comparação semanal.</p>
-                    </div>
-                `;
-                container.appendChild(placeholder);
-            }
-        }
-
-        function setupStoreAnalysisTabs(sortedStores, latestDate) {
-            const navContainer = document.getElementById('tabs-navigation');
-            navContainer.innerHTML = '';
-
-            sortedStores.forEach((store, index) => {
-                const tab = document.createElement('button');
-                tab.className = `tab-item interactive-item w-full text-left p-3 rounded-xl font-semibold transition-all duration-300 ${index === 0 ? 'active' : ''}`;
-                tab.textContent = shortenName(store.name);
-                tab.onclick = () => {
-                    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    
-                    const contentContainer = document.getElementById('tab-content');
-                    contentContainer.classList.remove('fade-in');
-                    void contentContainer.offsetWidth; // Trigger reflow to restart animation
-                    contentContainer.classList.add('fade-in');
-
-                    renderStoreDetails(store, latestDate);
-                    renderWtdComparison(store, latestDate);
-                };
-                navContainer.appendChild(tab);
+            lucasCard.addEventListener('click', (e) => {
+                e.preventDefault(); 
+                body.classList.add('lucas-active');
             });
 
-            if (sortedStores.length > 0) {
-                renderStoreDetails(sortedStores[0], latestDate);
-                renderWtdComparison(sortedStores[0], latestDate);
-            }
-        }
-
-        function renderStoreDetails(store, latestDate) {
-            const contentContainer = document.getElementById('tab-content');
-            Object.values(chartInstances).forEach(chart => { if(chart.canvas.id !== 'rankingChart') chart.destroy()});
-
-            contentContainer.innerHTML = `
-                <div class="mb-6">
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-900">${store.name}</h3>
-                </div>
-
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
-                    <div class="bg-gray-50 p-3 rounded-xl">
-                        <p class="text-xs sm:text-sm text-gray-500 font-medium">Valor Antecipado</p>
-                        <p class="text-base sm:text-lg font-bold text-gray-800 mt-1">${formatCurrency(store.totalValorAntecipado)}</p>
-                    </div>
-                    <div class="bg-gray-50 p-3 rounded-xl">
-                        <p class="text-xs sm:text-sm text-gray-500 font-medium">Ticket Médio</p>
-                        <p class="text-base sm:text-lg font-bold text-gray-800 mt-1">${formatCurrency(store.avgTicket)}</p>
-                    </div>
-                     <div class="bg-gray-50 p-3 rounded-xl">
-                        <p class="text-xs sm:text-sm text-gray-500 font-medium">Transações</p>
-                        <p class="text-base sm:text-lg font-bold text-gray-800 mt-1">${formatNumber(store.totalTransactions)}</p>
-                    </div>
-                    <div class="bg-gray-50 p-3 rounded-xl">
-                        <p class="text-xs sm:text-sm text-gray-500 font-medium">Vidas Acum.</p>
-                        <p class="text-base sm:text-lg font-bold text-gray-800 mt-1">${formatNumber(store.totalVidas)}</p>
-                    </div>
-                     <div class="bg-green-50 p-3 rounded-xl border-l-4 border-green-500">
-                        <p class="text-xs sm:text-sm text-green-800 font-medium">Penetração</p>
-                        <p class="text-base sm:text-lg font-bold text-green-800 mt-1">${formatPercent(store.penetration)}</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                    <div class="xl:col-span-2 space-y-16">
-                        <div>
-                            <h4 class="font-bold text-lg mb-3 text-gray-900">Tendência Diária</h4>
-                            <div class="h-80"><canvas id="trend-chart"></canvas></div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div>
-                                <h4 class="font-bold text-lg mb-3 text-gray-900">Flutuação do Ticket Médio</h4>
-                                <div class="h-56"><canvas id="ticket-chart"></canvas></div>
-                            </div>
-                             <div>
-                                <h4 class="font-bold text-lg mb-3 text-gray-900">Evolução da Penetração</h4>
-                                <div class="h-56"><canvas id="penetration-chart"></canvas></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="xl:col-span-1 space-y-8">
-                        <div>
-                            <div class="flex justify-between items-center flex-wrap gap-y-2 mb-3">
-                                <h4 class="font-bold text-lg text-gray-900">Calendário de Atividade</h4>
-                                <div id="heatmap-controls" class="flex-shrink-0 flex space-x-1 rounded-full bg-gray-200 p-1" role="group"></div>
-                            </div>
-                            <div id="calendar-heatmap"></div>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-lg mb-3 text-gray-900">Insights Rápidos</h4>
-                            <div id="insights" class="space-y-3"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            if (!latestDate) return;
-
-            const dailyDataMap = new Map(store.dailyData.map(d => [d.date, d]));
-
-            const labels = Array.from({ length: latestDate.getUTCDate() }, (_, i) => {
-                const date = new Date(latestDate);
-                date.setUTCDate(i + 1);
-                return `2025-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')}`;
+            backButton.addEventListener('click', () => {
+                body.classList.remove('lucas-active');
             });
-
-            const dailyValorAntecipado = labels.map(label => dailyDataMap.get(label)?.valorAntecipado || null);
-            const dailyTransactions = labels.map(label => dailyDataMap.get(label)?.transactions || null);
-            const dailyVidas = labels.map(label => dailyDataMap.get(label)?.vidasDia || null);
-            const dailyAvgTicket = labels.map(label => dailyDataMap.get(label)?.avgTicket || null);
-            
-            const dailyCumulativePenetration = labels.map(label => {
-                const entry = dailyDataMap.get(label);
-                if (!entry) return null;
-                const population = POPULATION_DATA[store.name] || 0;
-                return population > 0 ? entry.vidasAcumuladas / population : 0;
-            });
-            
-            renderTrendChart('trend-chart', labels, dailyValorAntecipado, dailyTransactions, dailyVidas);
-            renderTicketChart('ticket-chart', labels, dailyAvgTicket);
-            renderPenetrationChart('penetration-chart', labels, dailyCumulativePenetration);
-            renderCalendarHeatmap(store, latestDate, 'valorAntecipado'); 
-            renderInsights(store, latestDate);
-        }
-        
-        function renderTrendChart(canvasId, labels, valorData, transData, vidasData) {
-            const ctx = document.getElementById(canvasId)?.getContext('2d');
-            if(!ctx) return;
-
-            const datasets = [
-                {
-                    type: 'bar', label: 'Valor Antecipado', data: valorData, yAxisID: 'y', borderRadius: 4,
-                    backgroundColor: 'rgba(29, 130, 74, 0.7)', borderColor: 'transparent',
-                },
-                {
-                    type: 'line', label: 'Transações', data: transData, yAxisID: 'y1', tension: 0.4, borderWidth: 2.5, pointRadius: 2, borderDash: [5, 5],
-                    borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.2)', spanGaps: true,
-                },
-                {
-                    type: 'line', label: 'Vidas', data: vidasData, yAxisID: 'y1', tension: 0.4, borderWidth: 2.5, pointRadius: 2,
-                    borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.2)', spanGaps: true,
-                },
-            ];
-
-            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
-            chartInstances[canvasId] = new Chart(ctx, {
-                type: 'bar',
-                data: { labels, datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    animation: { duration: 1000 },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                usePointStyle: true,
-                                pointStyle: 'circle',
-                                color: '#374151',
-                                font: { weight: '500' }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (c) => `${c.dataset.label}: ${c.dataset.yAxisID === 'y' ? formatCurrency(c.raw) : formatNumber(c.raw)}`
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: { unit: 'day', displayFormats: { day: 'dd/MM' } },
-                            grid: { display: false },
-                            ticks: { color: '#6B7280' }
-                        },
-                        y: {
-                            position: 'left',
-                            beginAtZero: true,
-                            grid: { color: '#E5E7EB' },
-                            ticks: {
-                                color: '#1D824A',
-                                font: { weight: 'bold' },
-                                callback: (v) => new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(v)
-                            }
-                        },
-                        y1: {
-                            position: 'right',
-                            beginAtZero: true,
-                            grid: { drawOnChartArea: false },
-                            ticks: { color: '#6B7280' },
-                            afterDataLimits: (axis) => {
-                                axis.max = axis.max * 1.15;
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        function renderTicketChart(canvasId, labels, ticketData) {
-            const ctx = document.getElementById(canvasId)?.getContext('2d');
-            if(!ctx) return;
-            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
-            chartInstances[canvasId] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Ticket Médio',
-                        data: ticketData,
-                        borderColor: '#0EA5E9',
-                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
-                        borderWidth: 2,
-                        pointRadius: 2,
-                        tension: 0.4,
-                        fill: true,
-                        spanGaps: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 1000 },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: (c) => `Ticket Médio: ${formatCurrency(c.raw)}` } }
-                    },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: { unit: 'day', displayFormats: { day: 'dd/MM' } },
-                            grid: { display: false },
-                            ticks: { color: '#6B7280' }
-                        },
-                        y: {
-                            beginAtZero: false,
-                            grid: { color: '#E5E7EB' },
-                            ticks: {
-                                color: '#0EA5E9',
-                                font: { weight: 'bold' },
-                                callback: (v) => formatCurrency(v)
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderPenetrationChart(canvasId, labels, penetrationData) {
-            const ctx = document.getElementById(canvasId)?.getContext('2d');
-            if(!ctx) return;
-            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
-            chartInstances[canvasId] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Penetração',
-                        data: penetrationData,
-                        borderColor: '#8B5CF6',
-                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                        borderWidth: 2,
-                        pointRadius: 2,
-                        tension: 0.4,
-                        fill: true,
-                        spanGaps: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 1000 },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: (c) => `Penetração: ${formatPercent(c.raw)}` } }
-                    },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: { unit: 'day', displayFormats: { day: 'dd/MM' } },
-                            grid: { display: false },
-                            ticks: { color: '#6B7280' }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#E5E7EB' },
-                            ticks: {
-                                color: '#8B5CF6',
-                                font: { weight: 'bold' },
-                                callback: (v) => formatPercent(v)
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderCalendarHeatmap(store, latestDate, metric) {
-            const container = document.getElementById('calendar-heatmap');
-            const controlsContainer = document.getElementById('heatmap-controls');
-            if(!container || !controlsContainer) return;
-            controlsContainer.innerHTML = '';
-            
-            const month = latestDate.getUTCMonth();
-            const year = latestDate.getUTCFullYear();
-
-            const firstDayOfMonth = new Date(Date.UTC(year, month, 1));
-            const firstDayOfWeek = firstDayOfMonth.getUTCDay();
-            const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-
-            const dailyDataMap = new Map(store.dailyData.map(d => [new Date(d.date).getUTCDate(), d]));
-            
-            const values = Array.from({ length: daysInMonth }, (_, i) => dailyDataMap.get(i + 1)?.[metric] || 0);
-            const maxValue = Math.max(...values.filter(v => v > 0));
-            
-            let html = `<div class="calendar-grid">`;
-            ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].forEach(h => html += `<div class="calendar-day-header">${h}</div>`);
-            for (let i = 0; i < firstDayOfWeek; i++) html += `<div class="calendar-day empty"></div>`;
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const value = dailyDataMap.get(day)?.[metric] || 0;
-                const intensity = maxValue > 0 ? value / maxValue : 0;
-                let bgColor = '#f3f4f6';
-                if (value > 0) bgColor = `rgba(33, 194, 94, ${0.15 + intensity * 0.85})`;
-                html += `<div title="Dia ${day}: ${formatNumber(value)}" class="calendar-day" style="background-color: ${bgColor}; color: ${intensity > 0.6 ? 'white' : 'black'}"><span class="font-semibold">${day}</span></div>`;
-            }
-            html += `</div>`;
-            container.innerHTML = html;
-
-            const metrics = [ { key: 'valorAntecipado', label: 'Valor' }, { key: 'transactions', label: 'Trans.' }, { key: 'vidasDia', label: 'Vidas' } ];
-            metrics.forEach(m => {
-                const button = document.createElement('button');
-                button.textContent = m.label;
-                button.className = `px-2 py-1 text-xs md:px-3 md:py-1 md:text-sm font-semibold rounded-full transition-colors duration-200 ${metric === m.key ? 'bg-picpay-green-dark text-white' : 'text-gray-600 hover:bg-gray-300'}`;
-                button.onclick = () => renderCalendarHeatmap(store, latestDate, m.key);
-                controlsContainer.appendChild(button);
-            });
-        }
-
-        function renderInsights(store, latestDate) {
-            const container = document.getElementById('insights');
-            if(!container) return;
-            container.innerHTML = '';
-            if (!store.dailyData || store.dailyData.length === 0 || !latestDate) {
-                container.innerHTML = `<p>Dados insuficientes.</p>`;
-                return;
-            }
-
-            const daysWithActivity = store.dailyData.filter(d => d.transactions > 0).length;
-            if (daysWithActivity === 0) {
-                container.innerHTML = `<p>Nenhuma atividade registrada para esta praça.</p>`;
-                return;
-            }
-            
-            const averageTpv = store.totalValorAntecipado / daysWithActivity;
-            const totalVidasDia = store.dailyData.reduce((sum, day) => sum + day.vidasDia, 0);
-            const averageVidas = totalVidasDia / daysWithActivity;
-            
-            const bestDay = store.dailyData.reduce((max, day) => day.valorAntecipado > max.valorAntecipado ? day : max, { valorAntecipado: -1 });
-            const bestVidasDay = store.dailyData.reduce((max, day) => day.vidasDia > max.vidasDia ? day : max, { vidasDia: -1 });
-
-            const bestDayPctAboveAvg = averageTpv > 0 ? (bestDay.valorAntecipado - averageTpv) / averageTpv : Infinity;
-            const bestVidasDayPctAboveAvg = averageVidas > 0 ? (bestVidasDay.vidasDia - averageVidas) / averageVidas : Infinity;
-
-            const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-            const weeklyTpv = new Array(7).fill(0).map(() => ({ total: 0, count: 0 }));
-            store.dailyData.forEach(d => {
-                const dayOfWeek = new Date(d.date).getUTCDay();
-                weeklyTpv[dayOfWeek].total += d.valorAntecipado;
-                weeklyTpv[dayOfWeek].count++;
-            });
-            const weeklyAvg = weeklyTpv.map(d => d.count > 0 ? d.total / d.count : 0);
-            const strongestDayIndex = weeklyAvg.indexOf(Math.max(...weeklyAvg));
-            const strongestDayAvgTpv = weeklyAvg[strongestDayIndex];
-            const strongestDayPctAboveAvg = averageTpv > 0 ? (strongestDayAvgTpv - averageTpv) / averageTpv : Infinity;
-
-
-            const insightsData = [
-                { 
-                    label: 'Melhor Dia (Valor)', 
-                    value: `Dia ${new Date(bestDay.date).getUTCDate()}`,
-                    subvalue: formatCurrency(bestDay.valorAntecipado),
-                    highlight: isFinite(bestDayPctAboveAvg) && bestDayPctAboveAvg > 0 ? `${formatPercent(bestDayPctAboveAvg, 0)} acima da média` : null,
-                    color: 'text-green-600',
-                    icon: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>`
-                },
-                { 
-                    label: 'Pico de Novas Vidas', 
-                    value: `Dia ${new Date(bestVidasDay.date).getUTCDate()}`,
-                    subvalue: `${formatNumber(bestVidasDay.vidasDia)} Vidas`,
-                    highlight: isFinite(bestVidasDayPctAboveAvg) && bestVidasDayPctAboveAvg > 0 ? `${formatPercent(bestVidasDayPctAboveAvg, 0)} acima da média` : null,
-                    color: 'text-blue-600',
-                    icon: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>`
-                },
-                 { 
-                    label: 'Dia Mais Forte', 
-                    value: weekdays[strongestDayIndex],
-                    subvalue: `${formatCurrency(strongestDayAvgTpv)}`,
-                    highlight: isFinite(strongestDayPctAboveAvg) && strongestDayPctAboveAvg > 0 ? `${formatPercent(strongestDayPctAboveAvg, 0)} acima da média` : null,
-                    color: 'text-purple-600',
-                    icon: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`
-                }
-            ];
-            
-            insightsData.forEach(item => {
-                const card = document.createElement('div');
-                card.className = `bg-gray-50 p-3 rounded-xl flex items-center space-x-4`;
-                card.innerHTML = `
-                    <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-full bg-white shadow-sm ${item.color}">
-                        ${item.icon}
-                    </div>
-                    <div class="flex-grow min-w-0">
-                        <p class="text-xs text-gray-500 font-semibold truncate">${item.label}</p>
-                        <p class="text-sm font-bold text-gray-800 truncate">${item.value}</p>
-                        <div class="flex items-baseline justify-between gap-x-2">
-                            <p class="text-xs font-medium text-gray-600 truncate">${item.subvalue}</p>
-                            ${item.highlight ? `<p class="text-xs font-bold ${item.color} flex-shrink-0">${item.highlight}</p>` : ''}
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // --- DASHBOARD INITIALIZATION ---
-        function initializeDashboard(csvData) {
-            try {
-                const { storesData, latestDate } = parseData(csvData);
-
-                if (!storesData || storesData.size === 0) {
-                    throw new Error("Nenhum dado válido foi processado da planilha. Verifique o formato.");
-                }
-
-          if (latestDate) {
-    document.getElementById('last-update').textContent = `Última atualização: ${latestDate.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        timeZone: 'UTC'
-    })}`;
-}
-                
-                const storeCalculations = [...storesData.entries()]
-                    .map(([name, data]) => ({ 
-                        name, 
-                        ...calculateTotals(data, POPULATION_DATA[name] || 0, latestDate), 
-                        dailyData: data 
-                    }))
-                    .sort((a, b) => b.totalValorAntecipado - a.totalValorAntecipado);
-
-                renderSummaryCards(storeCalculations);
-                renderPenetrationCards(storeCalculations);
-                setupRankingControls(storeCalculations);
-                renderRankingChart(storeCalculations);
-                setupStoreAnalysisTabs(storeCalculations, latestDate);
-
-                // Add staggered animations
-                document.querySelectorAll('.stagger-fade-in > *').forEach((el, i) => {
-                    el.style.animationDelay = `${i * 100}ms`;
-                });
-
-            } catch (error) {
-                console.error("Falha ao inicializar o dashboard:", error);
-                document.getElementById('main-content').innerHTML = `<div class="text-center p-10"><h1 class="text-2xl font-bold text-red-600">Ocorreu um erro ao carregar o dashboard.</h1><p class="text-gray-600 mt-2">${error.message}</p></div>`;
-            }
-        }
-
-        async function fetchAndRun() {
-            if (GOOGLE_SHEET_CSV_URL === 'COLOQUE_SEU_LINK_CSV_AQUI') {
-                 document.getElementById('main-content').innerHTML = `<div class="text-center p-10"><h1 class="text-2xl font-bold text-orange-600">Configuração Necessária</h1><p class="text-gray-600 mt-2">Por favor, edite o arquivo HTML e insira o link da sua planilha publicada na variável <strong>GOOGLE_SHEET_CSV_URL</strong>.</p></div>`;
-                 return;
-            }
-            try {
-                const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                if (!response.ok) {
-                    throw new Error(`A resposta da rede não foi 'ok'. Status: ${response.status} ${response.statusText}`);
-                }
-                const csvData = await response.text();
-                initializeDashboard(csvData);
-            } catch (error) {
-                console.error("Falha ao buscar ou processar dados da planilha:", error);
-                document.getElementById('main-content').innerHTML = `<div class="text-center p-10"><h1 class="text-2xl font-bold text-red-600">Não foi possível carregar os dados.</h1><p class="text-gray-600 mt-2">Verifique se o link da planilha está correto e se ela está "Publicada na web" como CSV. Detalhes do erro: ${error.message}</p></div>`;
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', fetchAndRun);
+        });
     </script>
 </body>
 </html>
