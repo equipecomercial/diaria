@@ -32,9 +32,9 @@
             transition: opacity 0.4s ease-out, transform 0.4s ease-out;
         }
 
-        /* --- CORREÇÃO PROFUNDA NA LÓGICA DE EXIBIÇÃO --- */
+        /* --- LÓGICA DE EXIBIÇÃO ATUALIZADA --- */
 
-        /* Estado inicial da seleção de representantes (visível e no fluxo) */
+        /* Estado inicial da seleção de executivos (visível) */
         #selection-view {
             opacity: 1;
             transform: scale(1);
@@ -42,7 +42,8 @@
         }
         
         /* Estado inicial das opções (invisível e fora do fluxo) */
-        #options-view {
+        #options-view-lucas,
+        #options-view-iasmim {
             opacity: 0;
             transform: scale(0.95);
             pointer-events: none;
@@ -52,8 +53,9 @@
             right: 0;
         }
 
-        /* Quando 'lucas-active' é adicionado ao body... */
-        body.lucas-active #selection-view {
+        /* Quando 'lucas-active' OU 'iasmim-active' é adicionado ao body... */
+        body.lucas-active #selection-view,
+        body.iasmim-active #selection-view {
             opacity: 0;
             transform: scale(0.95);
             pointer-events: none;
@@ -61,11 +63,13 @@
             z-index: -1; /* Garante que ela fique para trás */
         }
 
-        body.lucas-active #options-view {
+        /* Mostra a tela de opções correta */
+        body.lucas-active #options-view-lucas,
+        body.iasmim-active #options-view-iasmim {
             opacity: 1;
             transform: scale(1);
             pointer-events: auto;
-            position: relative; /* Coloca a segunda tela de volta no fluxo */
+            position: relative; /* Coloca a tela de opções de volta no fluxo */
         }
         
         @keyframes fadeIn {
@@ -99,7 +103,7 @@
                     <h2 class="text-3xl font-bold text-gray-800">Lucas</h2>
                 </a>
 
-                <a href="ias_publico.html" class="card-base bg-white w-full md:w-80 p-8 rounded-2xl shadow-lg flex flex-col justify-center items-center">
+                <a id="iasmim-card" href="#" class="card-base bg-white w-full md:w-80 p-8 rounded-2xl shadow-lg flex flex-col justify-center items-center">
                     <div class="bg-[#1D824A] p-5 rounded-full mb-5">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-white" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
@@ -110,7 +114,7 @@
             </div>
         </div>
 
-        <div id="options-view" class="view-container">
+        <div id="options-view-lucas" class="view-container">
             <header class="mb-10">
                 <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900">Dashboards de Lucas</h1>
                 <p class="text-lg text-gray-500 mt-2">Selecione o tipo de dashboard para visualizar.</p>
@@ -127,7 +131,28 @@
                         <p class="mt-2 opacity-90">Análise de praças do grupo</p>
                     </a>
                 </div>
-                <button id="back-button" class="text-blue-500 font-semibold option-card hover:underline" style="animation-delay: 350ms;">Voltar para o menu</button>
+                <button id="back-button-lucas" class="text-blue-500 font-semibold option-card hover:underline" style="animation-delay: 350ms;">Voltar para o menu</button>
+            </div>
+        </div>
+
+        <div id="options-view-iasmim" class="view-container">
+            <header class="mb-10">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900">Dashboards de Iasmim</h1>
+                <p class="text-lg text-gray-500 mt-2">Selecione o tipo de dashboard para visualizar.</p>
+            </header>
+            
+            <div class="flex flex-col items-center justify-center gap-8">
+                <div class="flex flex-col md:flex-row justify-center items-center gap-8">
+                    <a href="ias_publico.html" class="card-base option-card bg-gradient-to-br from-emerald-600 to-emerald-500 w-full md:w-80 h-56 p-6 rounded-2xl shadow-lg flex flex-col justify-center text-white" style="animation-delay: 150ms;">
+                        <h3 class="text-2xl font-bold">Setor Público</h3>
+                        <p class="mt-2 opacity-90">Análise de praças públicas</p>
+                    </a>
+                    <a href="ias_privado.html" class="card-base option-card bg-gray-700 text-white w-full md:w-80 h-56 p-6 rounded-2xl shadow-lg flex flex-col justify-center" style="animation-delay: 250ms;">
+                        <h3 class="text-2xl font-bold">Setor Privado</h3>
+                        <p class="mt-2 opacity-90">Análise de praças do grupo</p>
+                    </a>
+                </div>
+                <button id="back-button-iasmim" class="text-emerald-600 font-semibold option-card hover:underline" style="animation-delay: 350ms;">Voltar para o menu</button>
             </div>
         </div>
 
@@ -136,16 +161,33 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const body = document.body;
+            
+            // Elementos do Lucas
             const lucasCard = document.getElementById('lucas-card');
-            const backButton = document.getElementById('back-button');
+            const backButtonLucas = document.getElementById('back-button-lucas');
+            
+            // Elementos da Iasmim
+            const iasmimCard = document.getElementById('iasmim-card');
+            const backButtonIasmim = document.getElementById('back-button-iasmim');
 
+            // Eventos do Lucas
             lucasCard.addEventListener('click', (e) => {
                 e.preventDefault(); 
                 body.classList.add('lucas-active');
             });
 
-            backButton.addEventListener('click', () => {
+            backButtonLucas.addEventListener('click', () => {
                 body.classList.remove('lucas-active');
+            });
+
+            // Eventos da Iasmim
+            iasmimCard.addEventListener('click', (e) => {
+                e.preventDefault(); 
+                body.classList.add('iasmim-active');
+            });
+
+            backButtonIasmim.addEventListener('click', () => {
+                body.classList.remove('iasmim-active');
             });
         });
     </script>
