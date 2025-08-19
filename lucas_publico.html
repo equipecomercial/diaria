@@ -179,20 +179,8 @@
 
     <script>
         const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJSNOfwx9ai1_6-XoYCO4xlegtxqEWa8h6MKYidy61upIF2P-9bVgE0P_BfXgEqOGky1Hjpz1VRTW-/pub?gid=0&single=true&output=csv';
-
-        const POPULATION_DATA = {
-            'MUNICIPIO DE BOA VISTA': 13451,
-            'DISTRITO FEDERAL': 180645,
-            'GOVERNO DO ESTADO DO PIAUÍ': 119000,
-            'MUNICIPIO DE PATOS': 2072,
-            'MUNICIPIO DE PETROLINA': 11962,
-            'MUNICIPIO DE VOLTA REDONDA': 15688,
-            'MARANHÃO PÚBLICO': 84982,
-            'MUNICIPIO DE JAGUARIUNA': 1965,
-            'CPTM': 3536,
-            'SÃO CARLOS': 4066,
-            'CEARÁ': 132084
-        };
+        const POPULATION_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJSNOfwx9ai1_6-XoYCO4xlegtxqEWa8h6MKYidy61upIF2P-9bVgE0P_BfXgEqOGky1Hjpz1VRTW-/pub?gid=1494073098&single=true&output=csv';
+        let POPULATION_DATA = {};
         
         let chartInstances = {};
 
@@ -210,11 +198,7 @@
                 .replace('VOLTA REDONDA', 'V. REDONDA');
         };
         
-        /**
-         * Parses CSV text into a structured Map.
-         * @returns {{storesData: Map<string, object[]>, latestDate: Date}}
-         */
-        function parseData(csvText) {
+        function parseMainData(csvText) {
             const lines = csvText.trim().split('\n');
             const header = lines.shift().trim().split(',');
             
@@ -269,6 +253,34 @@
             });
             
             return { storesData, latestDate };
+        }
+        
+        function parsePopulationData(csvText) {
+            const populationMap = new Map();
+            const lines = csvText.trim().split('\n');
+            const header = lines.shift().trim().split(',');
+            
+            const pracaIndex = header.findIndex(h => h.trim().toLowerCase() === 'account_name');
+            const vidasIndex = header.findIndex(h => h.trim().toLowerCase() === 'vidas_com_margem');
+
+            if (pracaIndex === -1 || vidasIndex === -1) {
+                let errorMsg = "Não foi possível encontrar as colunas na planilha de população. ";
+                if(pracaIndex === -1) errorMsg += "Verifique se existe uma coluna chamada 'account_name'. ";
+                if(vidasIndex === -1) errorMsg += "Verifique se existe uma coluna chamada 'vidas_com_margem'.";
+                throw new Error(errorMsg);
+            }
+
+            lines.forEach(line => {
+                const parts = line.trim().split(',');
+                if (parts.length >= header.length) {
+                    const pracaName = parts[pracaIndex].trim().toUpperCase();
+                    const vidas = parseInt(parts[vidasIndex], 10) || 0;
+                    if (pracaName) {
+                        populationMap.set(pracaName, vidas);
+                    }
+                }
+            });
+            return populationMap;
         }
 
         function calculateTotals(data, population, latestDate) {
@@ -1035,27 +1047,33 @@
         }
 
         // --- DASHBOARD INITIALIZATION ---
-        function initializeDashboard(csvData) {
+        function initializeDashboard(mainCsvData, populationMap) {
             try {
-                const { storesData, latestDate } = parseData(csvData);
+                const { storesData, latestDate } = parseMainData(mainCsvData);
 
                 if (!storesData || storesData.size === 0) {
-                    throw new Error("Nenhum dado válido foi processado da planilha. Verifique o formato.");
+                    throw new Error("Nenhum dado válido foi processado da planilha principal. Verifique o formato.");
                 }
 
-          if (latestDate) {
-    document.getElementById('last-update').textContent = `Última atualização: ${latestDate.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        timeZone: 'UTC'
-    })}`;
-}
+                // Correlate and create the final POPULATION_DATA object
+                POPULATION_DATA = {};
+                for (const storeName of storesData.keys()) {
+                    POPULATION_DATA[storeName] = populationMap.get(storeName) || 0;
+                }
+
+                if (latestDate) {
+                    document.getElementById('last-update').textContent = `Última atualização: ${latestDate.toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        timeZone: 'UTC'
+                    })}`;
+                }
                 
                 const storeCalculations = [...storesData.entries()]
                     .map(([name, data]) => ({ 
                         name, 
-                        ...calculateTotals(data, POPULATION_DATA[name] || 0, latestDate), 
+                        ...calculateTotals(data, POPULATION_DATA[name], latestDate), 
                         dailyData: data 
                     }))
                     .sort((a, b) => b.totalValorAntecipado - a.totalValorAntecipado);
@@ -1077,28 +1095,31 @@
             }
         }
 
-        async function fetchAndRun() {
-            if (GOOGLE_SHEET_CSV_URL === 'COLOQUE_SEU_LINK_CSV_AQUI') {
-                 document.getElementById('main-content').innerHTML = `<div class="text-center p-10"><h1 class="text-2xl font-bold text-orange-600">Configuração Necessária</h1><p class="text-gray-600 mt-2">Por favor, edite o arquivo HTML e insira o link da sua planilha publicada na variável <strong>GOOGLE_SHEET_CSV_URL</strong>.</p></div>`;
-                 return;
-            }
+       async function fetchAndRun() {
             try {
-                const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                if (!response.ok) {
-                    throw new Error(`A resposta da rede não foi 'ok'. Status: ${response.status} ${response.statusText}`);
-                }
-                const csvData = await response.text();
-                initializeDashboard(csvData);
+                // Fetch both datasets in parallel
+                const [mainResponse, populationResponse] = await Promise.all([
+                    fetch(GOOGLE_SHEET_CSV_URL),
+                    fetch(POPULATION_CSV_URL)
+                ]);
+
+                if (!mainResponse.ok) throw new Error(`A resposta da rede para os dados principais não foi 'ok'. Status: ${mainResponse.status}`);
+                if (!populationResponse.ok) throw new Error(`A resposta da rede para os dados de população não foi 'ok'. Status: ${populationResponse.status}`);
+
+                const mainCsvData = await mainResponse.text();
+                const populationCsvData = await populationResponse.text();
+                
+                const populationMap = parsePopulationData(populationCsvData);
+                
+                initializeDashboard(mainCsvData, populationMap);
+
             } catch (error) {
                 console.error("Falha ao buscar ou processar dados da planilha:", error);
-                document.getElementById('main-content').innerHTML = `<div class="text-center p-10"><h1 class="text-2xl font-bold text-red-600">Não foi possível carregar os dados.</h1><p class="text-gray-600 mt-2">Verifique se o link da planilha está correto e se ela está "Publicada na web" como CSV. Detalhes do erro: ${error.message}</p></div>`;
+                document.getElementById('main-content').innerHTML = `<div class="text-center p-10"><h1 class="text-2xl font-bold text-red-600">Não foi possível carregar os dados.</h1><p class="text-gray-600 mt-2">Verifique se os links das planilhas estão corretos e se elas estão "Publicadas na web" como CSV. Detalhes do erro: ${error.message}</p></div>`;
             }
         }
 
         document.addEventListener('DOMContentLoaded', fetchAndRun);
     </script>
 </body>
-
 </html>
-
-

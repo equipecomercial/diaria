@@ -179,133 +179,8 @@
 
     <script>
         const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJSNOfwx9ai1_6-XoYCO4xlegtxqEWa8h6MKYidy61upIF2P-9bVgE0P_BfXgEqOGky1Hjpz1VRTW-/pub?gid=1029315595&single=true&output=csv';
-        const POPULATION_DATA = {
-        '2CLIX TECNOLOGIA LTDA': 42,
-        '2FUTURE': 103,
-        'ABASTECEDORA FAE LTDA': 88,
-        'Abramides': 345,
-        'Academia Wellness': 240,
-        'AEC': 0,
-        'AGRO GERAÇÕES': 208,
-        'AGT PARTICIPACOES LTDA': 11,
-        'ARRICO ALIMENTOS': 123,
-        'ASPER TECNOLOGIA LTDA': 216,
-        'ATACADÃO DIA A DIA': 9075,
-        'AUTODEFESA BRASIL': 327,
-        'BALTEC': 9,
-        'BFAP SOCIEDADE DE ADVOGADOS': 78,
-        'BG METROLOGIA': 9,
-        'BOA SAFRA': 729,
-        'BOWE': 20,
-        'CAIO INDUSCAR': 133,
-        'CARTÓRIO DE FORMOSA': 0,
-        'CB DISTRIBUIDORA': 78,
-        'CENTRAL-MAQUINAS AGRICOLAS LTDA': 301,
-        'CENTRO SUL': 15,
-        'CERVEJARIA GERMÂNIA': 419,
-        'CERVELIN TRANSPORTES': 2,
-        'Chinezinho - CORREA DUARTE PARTICIPACOES': 873,
-        'CIRO MOTOS': 407,
-        'CISBRA': 183,
-        'CLINICA INTTEGRARE': 3,
-        'CLINICA STATERA': 7,
-        'COMERCIAL GASPERAZZO LTDA': 89,
-        'COMERCIAL MULT MIX PRODUTOS ALIMENTICIOS LTDA': 150,
-        'Cubo Magico': 62,
-        'DPSP': 402,
-        'Duo Studio Interativo': 206,
-        'ELISETE DE FATIMA LIMA LTDA': 80,
-        'EMERSON APARECIDO': 12,
-        'ESPÁRTACO E GUARDED': 3313,
-        'ESSENCIAL CONSULTORIA': 26,
-        'Exclusive': 24,
-        'FASTMETAL': 30,
-        'FAZENDAS GATTO': 69,
-        'Flora Produtos de Higiene e Limpeza': 4435,
-        'GD7': 497,
-        'Global': 1931,
-        'GRUPO A.R.T': 178,
-        'Grupo Franciosi': 1814,
-        'Grupo Infinity': 63,
-        'Grupo Metal Solutions': 45,
-        'GRUPO SETTA': 65,
-        'Guanabara': 3127,
-        'HOWDEN BRASIL': 0,
-        'IACRILICOS COMERCIO E SERVIÇOS LTDA': 14,
-        'Igreja Pura Fé': 32,
-        'ILIA': 11,
-        'INSS': 350072,
-        'INTERFERENCIA TREINAMENTO LTDA': 13,
-        'JABLONSK & ALI': 128,
-        'JBJ AGROPECUARIA LTDA': 746,
-        'JEAN ALISI': 6,
-        'JLA PROMOÇÃO DE VENDAS': 11,
-        'JOEL SIQUEIRA & CIA SOROCABA LTDA': 106,
-        'JSD TELECOM': 402,
-        'L. O. Baptista': 63,
-        'LUAR PARTICIPAÇÕES': 30,
-        'Lubiana': 18,
-        'MAVIH CONFECCOES LTDA': 20,
-        'MAYARA RIBEIRO BUENO COMERCIO DE MOVEIS': 41,
-        'MERCADO VIOLETA': 2562,
-        'Molti Conteudos Digitais Ltda': 151,
-        'MUNDO GALÁPAGOS': 0,
-        'Nivia Tanaka Doda Ltda.': 261,
-        'NORTH TRADE': 3,
-        'ONCOCLÍNICAS': 6769,
-        'ONFLY': 625,
-        'ORGANIZE': 29,
-        'OVOS CARAMURU': 14,
-        'Ovos Mantiqueira': 6956,
-        'PAES & ALBUQUERQUE': 20,
-        'Paleta Roxa': 52,
-        'PARIS ATACADO': 0,
-        'PARLA CONTACT CENTER S/A': 106,
-        'PATRICIO CHARLES DE PROENÇA': 92,
-        'PEDREIRA': 152,
-        'PEROLA DISTRIBUICAO E LOGISTICA S/A': 0,
-        'Pessoalize': 1651,
-        'Planel Engenharia e Serviços Elétricos Ltda': 101,
-        'PLANET CELL': 77,
-        'PLAYVENDER DO BRASIL': 1510,
-        'POLIFITEMA': 70,
-        'POSTAL SAÚDE': 501,
-        'POSTOS PARANÁ': 132,
-        'PRENCON': 9,
-        'PRIDE': 206,
-        'Prima Foods S.A.': 3713,
-        'Proquigel Quimica S/A': 721,
-        'PUBLICIS BRASIL COMUNICACAO': 1725,
-        'R. AMARAL ADVOGADOS': 48,
-        'REDE BOM LUGAR': 66,
-        'Rede Marcela - Polus Comercio e Serviço Ltda': 40,
-        'Revendedora de Gás Autorama Ltda': 56,
-        'RICOY': 0,
-        'RIZZO IMOVEIS': 106,
-        'S5 ENGENHARIA': 19,
-        'SEMENTES ELIANE': 221,
-        'SEMENTES PRODUTIVA LTDA': 934,
-        'SHIELD RIO BLINDAGEM': 6,
-        'SISTEL ENERGIA CONFIAVEL': 15,
-        'SOCIEDADE CIVIL CASAS DE EDUCACAO - SCCE': 177,
-        'Sollo Brasil': 4661,
-        'SOMA GESTAO DE VENDAS LTDA': 37,
-        'SORRIA QUE DA SERVICOS ODONTOLOGICOS VILA DAS MERCES LTDA': 20,
-        'STX ENERGIA LTDA': 128,
-        'SUPERMERCADO IQUEGAMI': 1727,
-        'SUPERMERCADO ZAIA EM RECUPERACAO JUDICIAL LTDA': 219,
-        'TERRAZI HOLDING S/A': 0,
-        'Teste Portal': 58,
-        'TOMBINI & CIA. LTDA': 762,
-        'TRANSGRÃOS': 574,
-        'TT DISTRIBUIDORA': 960,
-        'Uppertools Tecnologia da Informação Ltda': 135,
-        'USE EQUIPAMENTOS': 8,
-        'Usemobile Soluções em Tecnologia Ltda': 11,
-        'VAIDE': 25,
-        'VICTORIANA INDUSTRIA, CONFECCOES E COMERCIO LTDA': 4,
-        'WOOBA SISTEMAS': 0,      
-        };
+        const POPULATION_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJSNOfwx9ai1_6-XoYCO4xlegtxqEWa8h6MKYidy61upIF2P-9bVgE0P_BfXgEqOGky1Hjpz1VRTW-/pub?gid=1494073098&single=true&output=csv';
+        let POPULATION_DATA = {};
         
         let chartInstances = {};
 
@@ -323,7 +198,7 @@
                 .replace('VOLTA REDONDA', 'V. REDONDA');
         };
         
-        function parseData(csvText) {
+        function parseMainData(csvText) {
             const lines = csvText.trim().split('\n');
             const header = lines.shift().trim().split(',');
             
@@ -378,6 +253,39 @@
             
             return { storesData, latestDate };
         }
+
+        function parsePopulationData(csvText) {
+            const populationMap = new Map();
+            const lines = csvText.trim().split('\n');
+            const header = lines.shift().trim().split(',');
+            
+            // --- CORREÇÃO AQUI ---
+            // Procurar pelos nomes de coluna corretos que você informou
+            const pracaIndex = header.findIndex(h => h.trim().toLowerCase() === 'account_name');
+            const vidasIndex = header.findIndex(h => h.trim().toLowerCase() === 'vidas_com_margem');
+
+            if (pracaIndex === -1 || vidasIndex === -1) {
+                // Mensagem de erro mais clara caso as colunas não sejam encontradas
+                let errorMsg = "Não foi possível encontrar as colunas na planilha de população. ";
+                if(pracaIndex === -1) errorMsg += "Verifique se existe uma coluna chamada 'account_name'. ";
+                if(vidasIndex === -1) errorMsg += "Verifique se existe uma coluna chamada 'vidas_com_margem'.";
+                throw new Error(errorMsg);
+            }
+
+            lines.forEach(line => {
+                const parts = line.trim().split(',');
+                if (parts.length >= header.length) {
+                    const pracaName = parts[pracaIndex].trim().toUpperCase();
+                    // Usar o índice da coluna de vidas corrigido
+                    const vidas = parseInt(parts[vidasIndex], 10) || 0;
+                    if (pracaName) {
+                        populationMap.set(pracaName, vidas);
+                    }
+                }
+            });
+            return populationMap;
+        }
+
 
         function calculateTotals(data, population, latestDate) {
             let totalValorAntecipado = 0;
@@ -1143,27 +1051,33 @@
         }
 
         // --- DASHBOARD INITIALIZATION ---
-        function initializeDashboard(csvData) {
+        function initializeDashboard(mainCsvData, populationMap) {
             try {
-                const { storesData, latestDate } = parseData(csvData);
+                const { storesData, latestDate } = parseMainData(mainCsvData);
 
                 if (!storesData || storesData.size === 0) {
-                    throw new Error("Nenhum dado válido foi processado da planilha. Verifique o formato.");
+                    throw new Error("Nenhum dado válido foi processado da planilha principal. Verifique o formato.");
                 }
 
-          if (latestDate) {
-    document.getElementById('last-update').textContent = `Última atualização: ${latestDate.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        timeZone: 'UTC'
-    })}`;
-}
+                // Correlate and create the final POPULATION_DATA object
+                POPULATION_DATA = {};
+                for (const storeName of storesData.keys()) {
+                    POPULATION_DATA[storeName] = populationMap.get(storeName) || 0;
+                }
+
+                if (latestDate) {
+                    document.getElementById('last-update').textContent = `Última atualização: ${latestDate.toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        timeZone: 'UTC'
+                    })}`;
+                }
                 
                 const storeCalculations = [...storesData.entries()]
                     .map(([name, data]) => ({ 
                         name, 
-                        ...calculateTotals(data, POPULATION_DATA[name] || 0, latestDate), 
+                        ...calculateTotals(data, POPULATION_DATA[name], latestDate), 
                         dailyData: data 
                     }))
                     .sort((a, b) => b.totalValorAntecipado - a.totalValorAntecipado);
@@ -1186,25 +1100,30 @@
         }
 
         async function fetchAndRun() {
-            if (GOOGLE_SHEET_CSV_URL === 'COLOQUE_SEU_LINK_CSV_AQUI') {
-                 document.getElementById('main-content').innerHTML = `<div class="text-center p-10"><h1 class="text-2xl font-bold text-orange-600">Configuração Necessária</h1><p class="text-gray-600 mt-2">Por favor, edite o arquivo HTML e insira o link da sua planilha publicada na variável <strong>GOOGLE_SHEET_CSV_URL</strong>.</p></div>`;
-                 return;
-            }
             try {
-                const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                if (!response.ok) {
-                    throw new Error(`A resposta da rede não foi 'ok'. Status: ${response.status} ${response.statusText}`);
-                }
-                const csvData = await response.text();
-                initializeDashboard(csvData);
+                // Fetch both datasets in parallel
+                const [mainResponse, populationResponse] = await Promise.all([
+                    fetch(GOOGLE_SHEET_CSV_URL),
+                    fetch(POPULATION_CSV_URL)
+                ]);
+
+                if (!mainResponse.ok) throw new Error(`A resposta da rede para os dados principais não foi 'ok'. Status: ${mainResponse.status}`);
+                if (!populationResponse.ok) throw new Error(`A resposta da rede para os dados de população não foi 'ok'. Status: ${populationResponse.status}`);
+
+                const mainCsvData = await mainResponse.text();
+                const populationCsvData = await populationResponse.text();
+                
+                const populationMap = parsePopulationData(populationCsvData);
+                
+                initializeDashboard(mainCsvData, populationMap);
+
             } catch (error) {
                 console.error("Falha ao buscar ou processar dados da planilha:", error);
-                document.getElementById('main-content').innerHTML = `<div class="text-center p-10"><h1 class="text-2xl font-bold text-red-600">Não foi possível carregar os dados.</h1><p class="text-gray-600 mt-2">Verifique se o link da planilha está correto e se ela está "Publicada na web" como CSV. Detalhes do erro: ${error.message}</p></div>`;
+                document.getElementById('main-content').innerHTML = `<div class="text-center p-10"><h1 class="text-2xl font-bold text-red-600">Não foi possível carregar os dados.</h1><p class="text-gray-600 mt-2">Verifique se os links das planilhas estão corretos e se elas estão "Publicadas na web" como CSV. Detalhes do erro: ${error.message}</p></div>`;
             }
         }
 
         document.addEventListener('DOMContentLoaded', fetchAndRun);
     </script>
 </body>
-
 </html>
